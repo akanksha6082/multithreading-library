@@ -72,7 +72,7 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
 
     if(thread_block->stack_base == NULL){
         
-        //allocate the stack to thread
+        /*allocate the stack to thread*/
        
         thread_block->stack_base = _stack_allocate(thread_block->stack_size);
         if(thread_block->stack_base == NULL){
@@ -131,7 +131,7 @@ static inline int _futex(int *addr, int futex_op, int val) {
     return syscall(SYS_futex, addr, futex_op, val, NULL, NULL, 0);
 }
 
-void _cleanup_thread(athread * thread){
+static inline void _cleanup_thread(athread * thread){
 
     /* deallocate the stack of thread */
     _deallocate_stack(thread->stack_base, thread->stack_size);
@@ -174,7 +174,7 @@ int athread_join(athread_t thread_id, void ** return_value){
 void athread_exit(void * retval){
     
     /*get the calling threads tcb(thread control block)*/
-    athread * current_thread = athread_self();
+    athread * current_thread = _wrapper_athread_self();
     
     /*store the return value of the thread routine function*/
     current_thread->return_value = retval;
@@ -199,7 +199,14 @@ int athread_equal(athread_t thread1, athread_t thread2){
  *  returns the tls of calling thread using  arch_prctl() system call
  */
 
-athread * athread_self(void){
+
+athread_t athread_self(void){
+    athread * calling_thread = _wrapper_athread_self();
+    return calling_thread->tid;
+
+}
+
+static inline athread * _wrapper_athread_self(void){
     _uint addr;
 
     int return_value = _get_tls(&addr);

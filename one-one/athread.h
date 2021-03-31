@@ -28,12 +28,11 @@ int athread_join(athread_t thread_id, void ** return_value );
 
 void athread_exit(void * retval);
 
-void _cleanup_thread(athread * thread);
-
 int athread_yield(void);
 
 int athread_equal(athread_t thread1, athread_t thread2);
 
-athread* athread_self(void);
+athread_t athread_self(void);
+
 
 #endif
