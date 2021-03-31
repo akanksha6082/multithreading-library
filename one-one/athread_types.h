@@ -85,7 +85,6 @@ typedef struct athread{
     ptr_t args;
 
     
-    
     /*Thread return value */
     ptr_t return_value;
 
@@ -101,10 +100,33 @@ typedef struct athread{
 
 }athread;
 
+/*
+    Thread Handle for User Handling
+*/
+typedef athread *thread;
+
+/*
+    Thread Spinlocks defination
+*/
+typedef struct _athread_SpinLock {
+    
+    /*Owner of the lock*/
+    athread owner_thread;
+
+    /*The Lock Word on which we will perform locking*/
+    int lock;
+}athread_SpinLock;
+
+/*
+    Spinlock Status Info
+*/
+#define SPINLOCK_ACQUIRED       (0u)
+#define SPINLOCK_NOT_ACQUIRED   (1u)
+
 
 typedef struct athread_attr_t {
     
-    /*detach state of thread*/
+    /* detach state of thread */
     int detach_state;
 
     /*pointer to stack base*/
