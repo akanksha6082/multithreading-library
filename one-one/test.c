@@ -14,9 +14,11 @@ void * start_routine(void * args){
 
 void * start_function(void * args){
     print("Thread 2\n");
+    athread_t tid = athread_self();
+    athread_detach(tid);
+    printf("after detach\n");
     print("Thread 2 - exiting\n");
-
-    athread_exit((void*)1);
+    return NULL;    
 }
 
 int main(){
@@ -33,13 +35,13 @@ int main(){
     int a = 10;
     void * retval;
 
-    athread_create(&tid, &attr, start_routine, &a);
+    //athread_create(&tid, &attr, start_routine, &a);
     athread_create(&tid2, &attr, start_function, NULL);
 
     sleep(10);
-    athread_join(tid, &retval);
-    printf("%d\n", *(int*)retval);
-    athread_join(tid2, &retval);
+    //athread_join(tid, &retval);
+    //printf("%d\n", *(int*)retval);
+    //athread_join(tid2, &retval);
     
     return 0;
 }

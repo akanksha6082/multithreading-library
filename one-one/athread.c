@@ -3,6 +3,44 @@
 #include "stackmem.h"
 
 
+static inline int _get_tls(_uint * addr){
+    return syscall(SYS_arch_prctl, ARCH_GET_FS, addr);
+}
+
+/*    
+ *  Futex syscall Implementation
+ *  Param[1] - Pointer to the futex word,
+ *  param[2] - futex_op operation to be performed,
+ *  param[3] - expected value of the futex word
+ *  Return value -  0 / errno
+ */
+
+static inline int _futex(int *addr, int futex_op, int val) {
+
+    /* Use the system call wrapper around the futex system call */
+    return syscall(SYS_futex, addr, futex_op, val, NULL, NULL, 0);
+}
+
+static void _cleanup_thread(athread * thread){
+
+    /* deallocate the stack of thread */
+    _deallocate_stack(thread->stack_base, thread->stack_size);
+
+    
+    /*change the state of thread*/
+    thread->thread_state = ATHREAD_CREATE_JOINED;
+
+    return;
+}
+
+static athread * _wrapper_athread_self(void){
+    _uint addr;
+
+    int return_value = _get_tls(&addr);
+
+    return (athread*)addr;
+    
+}
 
 int _wrapper_start(void * argument){
     
@@ -13,10 +51,13 @@ int _wrapper_start(void * argument){
     /*returned to the called location via long jump*/
     if(setjmp(thread_block->thread_context) == 0){
         thread_block->return_value = thread_block->start_routine(thread_block->args);
+        
     }
-
-    //functions to be done once the thread exits
-
+   
+    if(thread_block->thread_state == ATHREAD_CREATE_DETACHED){
+        free(thread_block);
+    }
+    
     return 0;
 }
 
@@ -113,44 +154,6 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
 
 }
 
-static inline int _get_tls(_uint * addr){
-    return syscall(SYS_arch_prctl, ARCH_GET_FS, addr);
-}
-
-/*    
- *  Futex syscall Implementation
- *  Param[1] - Pointer to the futex word,
- *  param[2] - futex_op operation to be performed,
- *  param[3] - expected value of the futex word
- *  Return value -  0 / errno
- */
-
-static inline int _futex(int *addr, int futex_op, int val) {
-
-    /* Use the system call wrapper around the futex system call */
-    return syscall(SYS_futex, addr, futex_op, val, NULL, NULL, 0);
-}
-
-static void _cleanup_thread(athread * thread){
-
-    /* deallocate the stack of thread */
-    _deallocate_stack(thread->stack_base, thread->stack_size);
-
-    
-    /*change the state of thread*/
-    thread->thread_state = ATHREAD_CREATE_JOINED;
-
-    return;
-}
-
-static athread * _wrapper_athread_self(void){
-    _uint addr;
-
-    int return_value = _get_tls(&addr);
-
-    return (athread*)addr;
-    
-}
 
 int athread_join(athread_t thread_id, void ** return_value){
     
@@ -166,6 +169,8 @@ int athread_join(athread_t thread_id, void ** return_value){
     /* Wait on the thread's futex word --returns if the value changes */
     /* kernel checks if the value at addr is the same as val; if so, it then blocks the calling thread or process*/
     _uint ret_val = _futex(&join_thread->futex, FUTEX_WAIT, join_thread->tid);
+
+    join_thread->thread_state = ATHREAD_CREATE_JOINED;
 
     if(errno != EAGAIN && ret_val == -1){
         return EINVAL;
@@ -188,11 +193,31 @@ void athread_exit(void * retval){
     /*store the return value of the thread routine function*/
     current_thread->return_value = retval;
 
-    /*change the state*/
-    current_thread->thread_state = ATHREAD_CREATE_EXITED;
 
     longjmp(current_thread->thread_context, 1);
 }
+
+
+int athread_detach(athread_t thread){
+
+   
+    athread * target_thread = search_tcb(&task_queue, thread);
+
+    if(target_thread == NULL){
+        return ESRCH;
+    }
+
+    if(target_thread->thread_state != ATHREAD_CREATE_JOINABLE ){
+        return EINVAL;
+    }
+
+
+    //change the state of thread as detached
+    target_thread->thread_state = ATHREAD_CREATE_DETACHED;
+    
+    return 0;
+}
+
 
 /*self blocking operation on thread*/
 int athread_yield(void){
@@ -208,12 +233,9 @@ int athread_equal(athread_t thread1, athread_t thread2){
  *  returns the tls of calling thread using  arch_prctl() system call
  */
 
-
-
-
-
 athread_t athread_self(void){
     athread * calling_thread = _wrapper_athread_self();
+   
     return calling_thread->tid;
 
 }

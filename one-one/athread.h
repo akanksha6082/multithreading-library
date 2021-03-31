@@ -34,5 +34,7 @@ int athread_equal(athread_t thread1, athread_t thread2);
 
 athread_t athread_self(void);
 
+int athread_detach(athread_t thread);
+
 
 #endif
