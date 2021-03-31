@@ -16,7 +16,6 @@ void * start_function(void * args){
     print("Thread 2\n");
     athread_t tid = athread_self();
     athread_detach(tid);
-    printf("after detach\n");
     print("Thread 2 - exiting\n");
     return NULL;    
 }
