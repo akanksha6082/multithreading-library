@@ -28,6 +28,8 @@ typedef void *ptr_t;
 typedef uint64_t _uint;
 
 
+
+
 /*
   Start Thread Routine
 */
@@ -115,5 +117,8 @@ typedef struct athread_attr_t {
     
 
 } athread_attr_t;
+
+
+#define TCB_SIZE (sizeof(athread))
 
 #endif

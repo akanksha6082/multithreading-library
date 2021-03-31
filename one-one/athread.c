@@ -131,7 +131,7 @@ static inline int _futex(int *addr, int futex_op, int val) {
     return syscall(SYS_futex, addr, futex_op, val, NULL, NULL, 0);
 }
 
-static inline void _cleanup_thread(athread * thread){
+static void _cleanup_thread(athread * thread){
 
     /* deallocate the stack of thread */
     _deallocate_stack(thread->stack_base, thread->stack_size);
@@ -141,6 +141,15 @@ static inline void _cleanup_thread(athread * thread){
     thread->thread_state = ATHREAD_CREATE_JOINED;
 
     return;
+}
+
+static athread * _wrapper_athread_self(void){
+    _uint addr;
+
+    int return_value = _get_tls(&addr);
+
+    return (athread*)addr;
+    
 }
 
 int athread_join(athread_t thread_id, void ** return_value){
@@ -200,19 +209,15 @@ int athread_equal(athread_t thread1, athread_t thread2){
  */
 
 
+
+
+
 athread_t athread_self(void){
     athread * calling_thread = _wrapper_athread_self();
     return calling_thread->tid;
 
 }
 
-static inline athread * _wrapper_athread_self(void){
-    _uint addr;
 
-    int return_value = _get_tls(&addr);
-
-    return (athread*)addr;
-    
-}
 
 
