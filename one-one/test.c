@@ -35,13 +35,13 @@ int main(){
     int a = 10;
     void * retval;
 
-    //athread_create(&tid, &attr, start_routine, &a);
+    athread_create(&tid, &attr, start_routine, &a);
     athread_create(&tid2, &attr, start_function, NULL);
 
     sleep(10);
-    //athread_join(tid, &retval);
-    //printf("%d\n", *(int*)retval);
-    //athread_join(tid2, &retval);
+    athread_join(tid, &retval);
+    printf("%d\n", *(int*)retval);
+    athread_join(tid2, &retval);
     
     return 0;
 }
