@@ -3,8 +3,6 @@
 
 ptr_t _stack_allocate( size_t stack_size) {
     
-
-    
     ptr_t stack_base;
     _uint page_size;
 
