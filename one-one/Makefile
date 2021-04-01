@@ -13,7 +13,7 @@ stackmem.o : stackmem.c stackmem.h athread_types.h utils.h
 	cc -c stackmem.c
 queue.o : queue.h queue.c athread_types.h
 	cc -c queue.c
-athread_locks.o : athread_locks.c athread.h athread_attr.h utils.h stackmem.h queue.h athread_types.h
+athread_locks.o : athread_locks.c athread.h athread_types.h
 	cc -c athread_locks.c
 clean:
 	rm -f *.o thread
