@@ -11,6 +11,7 @@ static size_t stack_limit;
 static _uint max_allowed_threads;
 static size_t page_size;
 static queue task_queue;
+static int is_intialised;
 
 
 /* Size of thread control block */

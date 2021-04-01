@@ -2,7 +2,7 @@
 
 static inline int _futex(int *addr, int futex_op, int val) {
 
-    /* Use the system call wrapper around the futex system call */
+    /* use the system call wrapper around the futex system call */
     return syscall(SYS_futex, addr, futex_op, val, NULL, NULL, 0);
 }
 
@@ -10,6 +10,7 @@ static inline int compare_and_swap(int * object, int old_value, int new_value ){
     
     assert(object);
     return atomic_compare_exchange_strong(object, &old_value, new_value);
+    
 }
 
 
@@ -22,102 +23,57 @@ int athread_mutex_init(athread_mutex_t * mutex){
 
 }
 
-/*masks the signals for calling thread*/
-static int disable_interrupt(){
-    
-    sigset_t set;
-    sigemptyset(&set);
-    sigaddset(&set, SIGALRM);
-
-    if(sigprocmask(SIG_BLOCK, &set, NULL) < 0){
-        return errno;
-    }
-
-    return 0;
-}
-
-
-/*unmasks the signals for calling thread*/
-static int enable_interrupt(){
-
-    sigset_t set;
-    sigemptyset(&set);
-    sigaddset(&set, SIGALRM);
-
-    if(sigprocmask(SIG_UNBLOCK, &set, NULL) < 0){
-        return errno;
-    }
-
-    return 0;
-
-}
-
-
 int athread_mutex_lock(athread_mutex_t * mutex){
 
     if(mutex == NULL)
         return EINVAL;
 
-    //check for the errors
+    /**check for the errors**/
     if(mutex->state == DESTROYED){
         return -1;
     }
+ 
+    /*check if lock is acquired using atomic instruction*/
+    while( !compare_and_swap(&mutex->locked_value, 0, 1)){
 
-    //disable the timer interrupt
-    disable_interrupt();
-
-    //check if lock is acquired or not using atomic instruction
-    int old_value = compare_and_swap(&mutex->locked_value, 0, 1);
-    
-    if(!old_value){
-
-        //lock can be acquired
-        mutex->state = 1;
-        athread_t target_thread = athread_self();
-        mutex->owner = target_thread;
-    }
-    else{
-        //cause the calling thread to sleep until the lock is available
-        _uint ret_val = _futex(&mutex->locked_value, FUTEX_WAIT, 1);
+        _futex(&mutex->locked_value, FUTEX_WAIT, 1);
         
-        if(errno != EAGAIN && ret_val == -1){
-            return EINVAL;
-        }
     }
+    
+    mutex->owner = athread_self();
    
     return 0;
 
 }
 
 
-int athead_mutex_unlock(athread_mutex_t * mutex){
+int athread_mutex_unlock(athread_mutex_t * mutex){
 
     if(mutex == NULL)
         return EINVAL;
 
     /*check for errors*/
-    if(mutex->state == DESTROYED || mutex->owner != athread_self()){
+    if(mutex->state == DESTROYED){
         return -1;
     }
     
+    if(mutex->owner != athread_self()){
+        return EACCES;
+    }
+    
     /*change the locked value*/
-    mutex->locked_value = 0;
+    if(!compare_and_swap(&mutex->locked_value, 1, 0)){
+        mutex->owner = -1;
+    }
+    
 
     /*invoke futex wake operation*/
     int ret_val = _futex(&mutex->locked_value, FUTEX_WAKE, 1);
     
-    if(ret_val == -1 && ret_val != EINVAL){
-        
-        mutex->owner = -1;
-        return EINVAL;
-    }
-
-    /*enable the timer interrupt*/ 
-    enable_interrupt();
-
     return 0;
 
 }
+
 
 int athread_mutex_destroy(athread_mutex_t * mutex){
     
@@ -126,15 +82,15 @@ int athread_mutex_destroy(athread_mutex_t * mutex){
         return EINVAL;
     }
 
+    /*mutex in locked state*/
     if(mutex->locked_value == 1){
         return EBUSY;
     }
-
-    if(mutex->owner != athread_self())
-        return EINVAL;
-    
+ 
+    /*mark the mutex as destroyed*/
     mutex->state = DESTROYED;
     
+    /*free the memory allocated to mutex*/
     free(mutex);
 
     return 0;
