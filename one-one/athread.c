@@ -125,9 +125,19 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
     thread_block->args = args;
     thread_block->start_routine = start_routine;
     thread_block->return_value = 0;
-    thread_block->thread_state = attr->detach_state ? attr->detach_state : ATHREAD_CREATE_JOINABLE;
-    thread_block->stack_size = attr->stack_size ? attr->stack_size : stack_limit;
-    thread_block->stack_base = attr->stack_addr ? attr->stack_addr : NULL ;
+    if(attr){
+        thread_block->thread_state = attr->detach_state ? attr->detach_state : ATHREAD_CREATE_JOINABLE;
+        thread_block->stack_size = attr->stack_size ? attr->stack_size : stack_limit;
+        thread_block->stack_base = attr->stack_addr ? attr->stack_addr : NULL ;
+    }
+    else{
+        
+        thread_block->thread_state = ATHREAD_CREATE_JOINABLE;
+        thread_block->stack_size = stack_limit;
+        thread_block->stack_base = NULL ;
+
+    }
+   
 
     if(thread_block->stack_base == NULL){
         
