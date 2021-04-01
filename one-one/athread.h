@@ -38,5 +38,15 @@ int athread_detach(athread_t thread);
 
 int athread_kill(athread_t thread, int sig);
 
+/*mutex functions*/
+
+int athread_mutex_init(athread_mutex_t * mutex);
+
+int athread_mutex_lock(athread_mutex_t * mutex);
+
+int athread_mutex_unlock(athread_mutex_t * mutex);
+
+int athread_mutex_destroy(athread_mutex_t * mutex);
+
 
 #endif

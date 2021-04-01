@@ -1,5 +1,5 @@
-target : test.o athread.o utils.o athread_attr.o stackmem.o queue.o
-	cc test.o athread.o utils.o athread_attr.o stackmem.o queue.o -o thread
+target : test.o athread.o utils.o athread_attr.o stackmem.o queue.o athread_locks.o
+	cc test.o athread.o utils.o athread_attr.o stackmem.o queue.o athread_locks.o -o thread
 
 test.o : test.c athread.h
 	cc -c test.c
@@ -13,6 +13,7 @@ stackmem.o : stackmem.c stackmem.h athread_types.h utils.h
 	cc -c stackmem.c
 queue.o : queue.h queue.c athread_types.h
 	cc -c queue.c
-
+athread_locks.o : athread_locks.c athread.h athread_attr.h utils.h stackmem.h queue.h athread_types.h
+	cc -c athread_locks.c
 clean:
 	rm -f *.o thread

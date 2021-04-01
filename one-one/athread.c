@@ -237,8 +237,6 @@ int athread_detach(athread_t thread){
 }
 
 
-
-
 /*
  * Delivers the specified signal to the target thread
  * param[1]     - athread Thread handle for the target thread
@@ -273,7 +271,7 @@ int athread_kill(athread_t thread, int sig_num) {
     }
 
     /* Return success status */
-    return THREAD_SUCCESS;
+    return 0;
 }
 
 
