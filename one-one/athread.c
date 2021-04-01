@@ -88,6 +88,7 @@ int athread_init(){
     max_allowed_threads = get_threads_limit();
     stack_limit = get_stack_limit();
     page_size = get_page_size();
+    is_intialised = 1;
 
     return 0;
 }
@@ -102,7 +103,11 @@ int athread_init(){
 
 int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t start_routine, ptr_t args){
     
-    
+    /*check if intialisation is done*/
+    if(!is_intialised){
+        athread_init();
+    }
+
     /*check for errors */
     if(return_qcount(&task_queue) == max_allowed_threads){
         return EAGAIN;
@@ -125,7 +130,9 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
     thread_block->args = args;
     thread_block->start_routine = start_routine;
     thread_block->return_value = 0;
+
     if(attr){
+        
         thread_block->thread_state = attr->detach_state ? attr->detach_state : ATHREAD_CREATE_JOINABLE;
         thread_block->stack_size = attr->stack_size ? attr->stack_size : stack_limit;
         thread_block->stack_base = attr->stack_addr ? attr->stack_addr : NULL ;
