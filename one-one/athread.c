@@ -21,6 +21,24 @@ static inline int _futex(int *addr, int futex_op, int val) {
     return syscall(SYS_futex, addr, futex_op, val, NULL, NULL, 0);
 }
 
+
+
+/**
+ * Sends a signal to a thread in the thread group
+ * param[1]     - tgid Thread group id
+ * param[2]     - tid Thread id
+ * param[3]     - sig Signal number
+ * Return type  - Integer status
+ */
+
+static inline int _tgkill(int tgid, int tid, int sig) {
+
+    /* Use the system call wrapper to invoke the call */
+    return syscall(SYS_tgkill, tgid, tid, sig);
+}
+
+
+
 static void _cleanup_thread(athread * thread){
 
     /* deallocate the stack of thread */
@@ -219,6 +237,54 @@ int athread_detach(athread_t thread){
 }
 
 
+
+
+/*
+ * Delivers the specified signal to the target thread
+ * param[1]     - athread Thread handle for the target thread
+ * param[2]     - sig_num Signal number
+ * Return type  - 0 if successful else returns errono
+ */
+
+int athread_kill(athread_t thread, int sig_num) {
+
+    athread * a_thread = search_tcb(&task_queue, thread);
+
+    /*error handling*/
+    if(a_thread == NULL){
+        return ESRCH;
+    }
+
+    if(a_thread->thread_state == ATHREAD_CREATE_JOINED){
+        return EINVAL;
+    }
+
+
+    uint32_t thread_group_id;
+
+    /* Get the thread group id */
+    thread_group_id = getpid();
+
+    /* Send the kill signal to the target thread */
+    if (_tgkill(thread_group_id, a_thread->tid, sig_num) == -1) {
+
+        /* Return error status */
+        return EINVAL;
+    }
+
+    /* Return success status */
+    return THREAD_SUCCESS;
+}
+
+
+/*returns the tls of calling thread using  arch_prctl() system call */
+athread_t athread_self(void){
+    athread * calling_thread = _wrapper_athread_self();
+   
+    return calling_thread->tid;
+
+}
+
 /*self blocking operation on thread*/
 int athread_yield(void){
     return sched_yield();
@@ -229,16 +295,6 @@ int athread_equal(athread_t thread1, athread_t thread2){
     return (thread1 == thread2);
 }
 
-/*
- *  returns the tls of calling thread using  arch_prctl() system call
- */
-
-athread_t athread_self(void){
-    athread * calling_thread = _wrapper_athread_self();
-   
-    return calling_thread->tid;
-
-}
 
 
 

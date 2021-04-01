@@ -17,6 +17,7 @@
 #include <syscall.h>
 #include <asm/prctl.h>
 #include <sys/prctl.h>
+#include <signal.h>
 
 
 
@@ -102,30 +103,6 @@ typedef struct athread{
 
 }athread;
 
-/*
-    Thread Handle for User Handling
-*/
-typedef athread *thread;
-
-/*
-    Thread Spinlocks defination
-*/
-typedef struct _athread_SpinLock {
-    
-    /*Owner of the lock*/
-    athread owner_thread;
-
-    /*The Lock Word on which we will perform locking*/
-    int lock;
-}athread_SpinLock;
-
-/*
-    Spinlock Status Info
-*/
-#define SPINLOCK_ACQUIRED       (0u)
-#define SPINLOCK_NOT_ACQUIRED   (1u)
-
-
 typedef struct athread_attr_t {
     
     /* detach state of thread */
@@ -142,5 +119,25 @@ typedef struct athread_attr_t {
 
 
 #define TCB_SIZE (sizeof(athread))
+
+
+/*
+    Thread Spinlocks defination
+*/
+typedef struct _athread_SpinLock {
+    
+    /*Owner of the lock*/
+    athread owner_thread;
+
+    /*The Lock Word on which we will perform locking*/
+    int lock;
+    
+}athread_SpinLock;
+
+/*
+    Spinlock Status Info
+*/
+#define SPINLOCK_ACQUIRED       (0u)
+#define SPINLOCK_NOT_ACQUIRED   (1u)
 
 #endif

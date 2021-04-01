@@ -6,7 +6,6 @@
 #include "utils.h"
 #include "stackmem.h"
 #include "athread_attr.h"
-#include "athread_kill.h"
 
 static size_t stack_limit;
 static _uint max_allowed_threads;
@@ -36,6 +35,8 @@ int athread_equal(athread_t thread1, athread_t thread2);
 athread_t athread_self(void);
 
 int athread_detach(athread_t thread);
+
+int athread_kill(athread_t thread, int sig);
 
 
 #endif
