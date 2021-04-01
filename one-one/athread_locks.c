@@ -73,8 +73,8 @@ int athread_mutex_lock(athread_mutex_t * mutex){
 
         //lock can be acquired
         mutex->state = 1;
-        athread *target_thread = athread_self();
-        mutex->owner = target_thread->tid;
+        athread_t target_thread = athread_self();
+        mutex->owner = target_thread;
     }
     else{
         //cause the calling thread to sleep until the lock is available
