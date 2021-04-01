@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "stackmem.h"
 #include "athread_attr.h"
+#include "athread_kill.h"
 
 static size_t stack_limit;
 static _uint max_allowed_threads;

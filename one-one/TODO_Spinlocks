@@ -1,0 +1,18 @@
+Spinlock Implemenattion
+1)Thread Spinlock defination
+2)Spinlock Statuses
+3)Spin Members Handling [Global defination]
+    set_owner
+    get_owner
+    acuire_lock
+    release_lock
+
+    spin_init 
+    spin_alloc
+    spin_free
+4)
+threadSpin_init     -> will initialize the Spinlock
+threadSpin_lock     -> will acquire the Spinlock
+threadSpin_trylock  -> Tries to acquire lock
+threadSpin_unlock   -> will release the Spinlock
+threadSpin_destroy  -> will destroy spinlock (basically will free the allocated memory for spinlock object)
