@@ -3,6 +3,7 @@
 
 #include "athread_types.h"
 #include "queue.h"
+#include "utils.h"
 
 /*global defintions*/
 static size_t stack_limit;
