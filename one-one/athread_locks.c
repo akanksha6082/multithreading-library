@@ -14,6 +14,106 @@ static inline int compare_and_swap(int * object, int old_value, int new_value ){
 }
 
 
+/*spinlock functions*/
+
+
+
+/*
+ * Initializes the spinlock
+ * Allocates the required memory for the spinlock object and initializes it to the base value
+ * Param[1] : spinlock Pointer to the spinlock instance
+ * Return Value : Thread return status
+ */
+
+int athread_spin_init(athread_spinlock_t * spinlock){
+    if(!spinlock)
+        return EINVAL;
+
+    /* Set the owner to none */
+    spinlock->owner_thread = -1;
+
+    /* Set the lock word status to not taken */
+    spinlock->lock = SPINLOCK_NOT_ACQUIRED; 
+
+    return 0;
+}
+
+
+/**
+ * Acquires the spinlock
+ * Params : spinlock Pointer to the spinlock instance
+ * [The call is blocking and will return only if the lock is acquired]
+ * Return Value : Thread return status
+ */
+int athread_spin_lock(athread_spinlock_t *spinlock){
+    
+    if(!spinlock)
+        return EINVAL;
+
+    // if(spinlock->lock == SPINLOCK_ACQUIRED && spinlock){
+    //     return -1;
+    // } 
+
+
+    /*While we don't get the lock*/
+    while (!compare_and_swap(&spinlock->lock, SPINLOCK_NOT_ACQUIRED, SPINLOCK_ACQUIRED));
+
+    /* set the owner of the lock */
+    spinlock->owner_thread = athread_self();
+    
+    return 0;
+}
+
+/**
+ * Releases the spinlock
+ * Param : spinlock Pointer to the spinlock instance
+ * Return Value : Thread return status
+ */
+int athread_spin_unlock(athread_spinlock_t *spinlock){
+
+    if(!spinlock)
+        return EINVAL;
+
+    // if(spinlock->lock == SPINLOCK_NOT_ACQUIRED){
+    //     return -1;
+    // }     
+
+    /*If the current thread does not own the lock*/
+    if(spinlock->owner_thread != athread_self()){
+        return EACCES;
+    }
+
+    /* Release the spinlock */
+    if (!compare_and_swap(&spinlock->lock, SPINLOCK_ACQUIRED, SPINLOCK_NOT_ACQUIRED)) {
+
+        /* Set the owner thread to null */
+        spinlock->lock = SPINLOCK_NOT_ACQUIRED;
+        spinlock->owner_thread = -1;
+        
+    }
+    return 0;
+}
+
+int athread_spin_destroy(athread_spinlock_t *spinlock){
+    
+    if(!spinlock){
+        return EINVAL;
+    }
+
+    if(spinlock->lock == SPINLOCK_ACQUIRED){
+        return EBUSY;
+    }
+
+    spinlock->owner_thread = -1;
+    
+    free(spinlock);
+    return 0;
+
+}
+
+
+/*Mutex functions*/
+
 int athread_mutex_init(athread_mutex_t * mutex){
     
     mutex->owner = -1;
@@ -23,12 +123,13 @@ int athread_mutex_init(athread_mutex_t * mutex){
 
 }
 
+
 int athread_mutex_lock(athread_mutex_t * mutex){
 
     if(mutex == NULL)
         return EINVAL;
 
-    /**check for the errors**/
+    /*check for the errors*/
     if(mutex->state == DESTROYED){
         return -1;
     }

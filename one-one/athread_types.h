@@ -22,8 +22,8 @@
 #include <signal.h>
 
 /* Spinlock Status Info */
-#define SPINLOCK_ACQUIRED       (0u)
-#define SPINLOCK_NOT_ACQUIRED   (1u)
+#define SPINLOCK_ACQUIRED       (1u)
+#define SPINLOCK_NOT_ACQUIRED   (0u)
 
 typedef pid_t athread_t;
 
@@ -114,15 +114,15 @@ typedef struct athread_attr_t {
 
 
 /*thread spinlocks*/
-typedef struct _athread_SpinLock {
+typedef struct athread_spinlock {
     
     /*owner of the lock*/
-    athread owner_thread;
+    athread_t owner_thread;
 
     /*the lock word on which we will perform locking*/
     int lock;
     
-}athread_SpinLock;
+}athread_spinlock_t;
 
 enum {
     ACTIVE,
@@ -141,9 +141,5 @@ typedef struct athread_mutex{
     int state;
 
 }athread_mutex_t;
-
-
-
-
 
 #endif

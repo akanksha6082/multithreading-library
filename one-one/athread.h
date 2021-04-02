@@ -39,6 +39,17 @@ int athread_detach(athread_t thread);
 
 int athread_kill(athread_t thread, int sig);
 
+
+/*spinlock functions*/
+int athread_spin_init(athread_spinlock_t *spinlock);
+
+int athread_spin_lock(athread_spinlock_t *spinlock);
+
+int athread_spin_unlock(athread_spinlock_t *spinlock);
+
+int athread_spin_destroy(athread_spinlock_t *spinlock);
+
+
 /*mutex functions*/
 
 int athread_mutex_init(athread_mutex_t * mutex);
