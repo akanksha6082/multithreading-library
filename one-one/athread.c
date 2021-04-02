@@ -88,7 +88,7 @@ int athread_init(){
     max_allowed_threads = get_threads_limit();
     stack_limit = get_stack_limit();
     page_size = get_page_size();
-    is_intialised = 1;
+    is_initialised = 1;
 
     return 0;
 }
@@ -104,7 +104,7 @@ int athread_init(){
 int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t start_routine, ptr_t args){
     
     /*check if intialisation is done*/
-    if(!is_intialised){
+    if(!is_initialised){
         athread_init();
     }
 
