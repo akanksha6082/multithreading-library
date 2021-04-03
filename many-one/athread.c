@@ -188,6 +188,10 @@ void athread_yield(){
     return;
 }
 
+athread_t athread_self(void){
+    return running_thread->tid;
+}
+
 int athread_join(athread_t thread_id,  void ** return_value){
     
     sigprocmask(SIG_BLOCK, &sigset, NULL);

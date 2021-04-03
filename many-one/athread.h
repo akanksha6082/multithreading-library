@@ -37,6 +37,8 @@ int athread_equal(athread_t thread1, athread_t thread2);
 
 int athread_join(athread_t thread_id, void ** return_value);
 
+athread_t athread_self(void);
+
 void athread_yield();
 
 
