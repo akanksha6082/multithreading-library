@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include <stdio.h>
 #include "athread.h"
 #include <string.h>
 #include <unistd.h>
@@ -57,7 +57,7 @@ int main(){
 
     printf("c = %ld  c1=%ld   c2 = %ld\n", c , c1, c2);
 
-    athread_spin_destroy(&mutex);
+    //athread_spin_destroy(&mutex);
 
     return 0;
 
