@@ -22,6 +22,7 @@
 #include <signal.h>
 #include <ucontext.h>
 
+
 typedef pid_t athread_t;
 typedef void *ptr_t;
 typedef uint64_t _uint;
@@ -31,14 +32,23 @@ typedef void * (*thread_start_t)(void *);
 
 
 /*thread state*/
-enum thread_state {
+typedef enum athread_state {
     
     RUNNABLE,
     RUNNING,
     WAITING,
     EXITED
     
-};
+}athread_state_t;
+
+/*detach state*/
+typedef enum detach_state{
+    
+    ATHREAD_CREATE_JOINABLE,
+    ATHREAD_CREATE_DETACHED,
+    ATHREAD_CREATE_JOINED,
+    
+}detachstate;
 
 /*thread control block*/
 typedef struct athread {
@@ -59,20 +69,15 @@ typedef struct athread {
     ptr_t return_value;
 
 
-    /*ptr to base of stack*/
-    ptr_t stack_base;
-
-
-    /*stack size*/
-    size_t stack_size;
-
-
     /*thread state*/
-    int thread_state;
+    athread_state_t thread_state;
 
 
-    /*threads context*/
-    ucontext_t thread_context;
+    /*detachstate*/
+    int detachstate;
+
+    /*thread context*/
+    ucontext_t *thread_context;
 
 
 } athread;
