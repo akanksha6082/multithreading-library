@@ -78,7 +78,7 @@ athread * dequeue(queue * q){
     node * front = q->front;
     if(is_empty(q)){
         qinit(q);
-        return;
+        return NULL;
     }
     node * p = q->front->next;
     node * return_node = q->front;

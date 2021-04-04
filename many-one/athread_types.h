@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <sched.h>
+#include <string.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <errno.h>
@@ -71,6 +72,9 @@ typedef struct athread {
 
     /*thread state*/
     athread_state_t thread_state;
+
+    /*thread id of waiting thread*/
+    athread_t joining_on;
 
 
     /*detachstate*/

@@ -8,22 +8,20 @@
 #include "stackmem.h"
 
 #define MAX_NUM_THREADS 64
-#define TIMER_INTERRUPT 10000
+
 
 /* Size of thread control block */
 #define TCB_SIZE (sizeof(athread))
 
-typedef struct itimerval athread_timer_t;
+
 
 /*global defintions*/
-static size_t stack_limit;
-static _uint max_allowed_threads;
-static size_t page_size;
+
+
 static queue *task_queue;
 static athread * running_thread;
 static int is_initialised;
 static athread_t utid = 0;
-static athread_timer_t timer;
 sigset_t sigset;
 
 
@@ -40,6 +38,8 @@ int athread_join(athread_t thread_id, void ** return_value);
 athread_t athread_self(void);
 
 void athread_yield();
+
+void athread_exit(void * retval);
 
 
 #endif
