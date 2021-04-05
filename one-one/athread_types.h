@@ -21,21 +21,22 @@
 #include <stdatomic.h>
 #include <signal.h>
 
-/* Spinlock Status Info */
+/* spinlock status info */
 #define SPINLOCK_ACQUIRED       (1u)
 #define SPINLOCK_NOT_ACQUIRED   (0u)
 
+
 typedef pid_t athread_t;
 
-typedef void *ptr_t;
+typedef void* ptr_t;
 
 typedef uint64_t _uint;
 
-/*Start Thread Routine*/
+/*start thread routine*/
 typedef void * (*thread_start_t)(void *);
 
 
-/*Thread state enumeration*/
+/*thread state enumeration*/
 enum {
 
     ATHREAD_CREATE_DETACHED,
@@ -45,7 +46,7 @@ enum {
 };
 
 
-/*Return statuses of the thread library*/
+/*return status of the thread library*/
 typedef enum _ThreadReturn {
 
     THREAD_SUCCESS,						
@@ -54,13 +55,13 @@ typedef enum _ThreadReturn {
 } ThreadReturn;
 
 
-/* Define Thread control block */
+/*thread control block */
 typedef struct athread{
     
-    /*Thread ID*/
+    /*thread ID*/
     athread_t tid;
 
-    /*Thread state*/
+    /*thread state*/
     int thread_state;
 
 
@@ -72,36 +73,44 @@ typedef struct athread{
     size_t stack_size;
 
 
-    /*Thread start Routine*/
+    /*thread start Routine*/
     thread_start_t start_routine;
 
 
-    /*Thread Arguments*/
+    /*thread arguments*/
     ptr_t args;
 
     
-    /*Thread return value */
+    /*thread return value */
     ptr_t return_value;
 
     
     
-    /*Futex word*/
+    /*futex word*/
     int32_t futex;	
 
     
-    /*Thread context*/
+    /*thread context*/
     jmp_buf thread_context;
+
+    /*wait*/
+    athread_t joining_on;
 
 
 }athread;
 
+
+
+/*thread attribute structure*/
 typedef struct athread_attr_t {
     
     /* detach state of thread */
     int detach_state;
 
+
     /*pointer to stack base*/
     ptr_t stack_addr;
+
 
     /*stack size*/
     size_t stack_size;
@@ -110,7 +119,11 @@ typedef struct athread_attr_t {
 } athread_attr_t;
 
 
-#define TCB_SIZE (sizeof(athread))
+/*lock status enumeration*/
+typedef enum lock_state {
+    ACTIVE,
+    DESTROYED,
+} lock_state_t;
 
 
 /*thread spinlocks*/
@@ -119,15 +132,15 @@ typedef struct athread_spinlock {
     /*owner of the lock*/
     athread_t owner_thread;
 
-    /*the lock word on which we will perform locking*/
+    /*lock word*/
     int lock;
+
+    /*lock status*/
+    lock_state_t state;
     
 }athread_spinlock_t;
 
-enum {
-    ACTIVE,
-    DESTROYED
-};
+
 
 /*mutex structure*/
 typedef struct athread_mutex{
@@ -138,7 +151,8 @@ typedef struct athread_mutex{
     /*thread id of thread currently owning lock*/
     athread_t owner;
 
-    int state;
+    /*state of mutex lock*/
+    lock_state_t state;
 
 }athread_mutex_t;
 
