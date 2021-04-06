@@ -16,6 +16,9 @@ static athread * find_next_runnable_thread(){
             case EXITED:
                         enqueue(task_queue, thread);
                         break;
+            case RUNNING:
+                        enqueue(task_queue, thread);
+                        break;
         }
         count--;
     }
@@ -23,8 +26,9 @@ static athread * find_next_runnable_thread(){
 }
 
 static void scheduler(int signum){
-       
+    
     interrupt_disable(&timer);
+    sigprocmask(SIG_BLOCK, &sigset, NULL);
 
     /*save the current thread context*/
     athread * prev_thread =  running_thread;
@@ -34,19 +38,22 @@ static void scheduler(int signum){
   
 
     /*continue with execution*/
-    if(next_thread == NULL)
+    if(next_thread == NULL){
         return;
+    }
+     
     
     if(prev_thread->thread_state == RUNNING)
         prev_thread->thread_state = RUNNABLE;
+    
+   
 
     next_thread->thread_state = RUNNING;
     running_thread = next_thread;
 
-    
+    sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+
     interrupt_enable(&timer);
-    
-    
     swapcontext(prev_thread->thread_context, next_thread->thread_context);
     
     return;
@@ -58,6 +65,7 @@ int athread_init(){
     /*intialization of globals*/
     task_queue = (queue *)malloc(sizeof(queue));
     qinit(task_queue);
+
     max_allowed_threads = MAX_NUM_THREADS;
     stack_limit = get_stack_limit();
     page_size = get_page_size();
@@ -103,7 +111,7 @@ int athread_init(){
     sigset_t block_signals;
     sigfillset(&block_signals);
     action.sa_mask = block_signals;
-    action.sa_flags = 0;
+    action.sa_flags = SA_RESTART;
 
     if (sigaction(SIGVTALRM, &action, NULL) < 0)
         return -1;
@@ -134,20 +142,23 @@ int athread_create(athread_t * tid, thread_start_t start_routine, void * args){
 
     /*check for errors */
     if(return_count(task_queue) == max_allowed_threads){
+       
         return EAGAIN;
     }
 
     if(!tid || !start_routine){
+        
         return EAGAIN;
     }
 
- 
-    interrupt_disable(&timer);
+    sigprocmask(SIG_BLOCK, &sigset, NULL);
     
     /* set up context of thread */
     athread * thread = (athread *)malloc(sizeof(athread));
-    if(thread == NULL)
+    if(thread == NULL){
+        sigprocmask(SIG_UNBLOCK, &sigset, NULL);
         return -1;
+    }
 
     thread->tid = utid++;
     thread->args = args;
@@ -161,13 +172,17 @@ int athread_create(athread_t * tid, thread_start_t start_routine, void * args){
     memset(thread->thread_context, '\0', sizeof(ucontext_t));
 
 
-    if (getcontext(thread->thread_context) == -1)
+    if (getcontext(thread->thread_context) == -1){
+        sigprocmask(SIG_UNBLOCK, &sigset, NULL);
         return -1;
+    }
+        
 
     
     /*allocate the stack*/
     ptr_t stack_base = _stack_allocate(stack_limit);
     if(stack_base == NULL){
+            sigprocmask(SIG_UNBLOCK, &sigset, NULL);
             return ENOMEM;
     }
 
@@ -184,7 +199,8 @@ int athread_create(athread_t * tid, thread_start_t start_routine, void * args){
 
     *tid = thread->tid;
 
-    interrupt_enable(&timer);
+    sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+    //display(task_queue);
 
     return 0;
 }
@@ -196,7 +212,6 @@ int athread_equal(athread_t thread1, athread_t thread2){
     
 
 void athread_yield(){
-
     raise(SIGVTALRM);
     return;
 }
@@ -207,20 +222,22 @@ athread_t athread_self(void){
 
 int athread_join(athread_t thread_id,  void ** return_value){
     
-    
-    interrupt_disable(&timer);
+
+    sigprocmask(SIG_BLOCK, &sigset, NULL);
     
     athread * join_thread = search_tcb(task_queue, thread_id);
     
     /*check for errors*/
     if(join_thread == NULL){
-        interrupt_enable(&timer);
+   
+        sigprocmask(SIG_UNBLOCK, &sigset, NULL);
         return ESRCH;
     }
 
     /*check for deadlock*/
     if(thread_id == running_thread->tid){
-        interrupt_enable(&timer);
+       
+        sigprocmask(SIG_UNBLOCK, &sigset, NULL);
         return EDEADLK;
 
     }
@@ -228,7 +245,8 @@ int athread_join(athread_t thread_id,  void ** return_value){
     
     /*check if thread is joinable*/
     if(join_thread->detachstate == ATHREAD_CREATE_JOINED || join_thread->detachstate == ATHREAD_CREATE_DETACHED){
-        interrupt_enable(&timer);
+      
+        sigprocmask(SIG_UNBLOCK, &sigset, NULL);
         return EINVAL;
     }
         
@@ -238,8 +256,7 @@ int athread_join(athread_t thread_id,  void ** return_value){
     join_thread->joining_on = running_thread->tid;
 
 
-    /*enable timer interrupt*/
-    interrupt_enable(&timer);
+    sigprocmask(SIG_UNBLOCK, &sigset, NULL);
 
     /*wait for thread to terminate*/
     while(join_thread->thread_state != EXITED);
@@ -253,7 +270,7 @@ int athread_join(athread_t thread_id,  void ** return_value){
 
 void athread_exit(void * retval){
    
-    interrupt_disable(&timer);
+    sigprocmask(SIG_BLOCK, &sigset, NULL);
 
     athread * target_thread = running_thread;
     target_thread->return_value = retval;
@@ -264,8 +281,8 @@ void athread_exit(void * retval){
         thread->thread_state = RUNNABLE;
     }
 
-    interrupt_enable(&timer);
-
+    sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+   
     athread_yield();
 
     return;

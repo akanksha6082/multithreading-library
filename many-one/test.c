@@ -32,7 +32,7 @@ void * f3(void * args){
     athread_t id = athread_self();
     printf("f3 = %d\n", id);
     int sum = 0;
-    for(int i =0;i<10000; i++){
+    for(int i =0;i<1000000; i++){
         for(int j =0; j<10000; j++){
             sum = i +j;
         }
@@ -44,19 +44,24 @@ int main(int argc, char * argv[]){
     
     athread_init();
     athread_t t1, t2, t3;
-
+    
     athread_create(&t3, f3, NULL);
     athread_create(&t1, f1, NULL);
     athread_create(&t2, f2, NULL);
     
- 
+    int sum = 0;
+    for(int i =0;i<100000; i++){
+        for(int j =0; j<100000; j++){
+            sum = i +j;
+        }
+    }
+    printf("sum in main = %d\n", sum);
+
     athread_join(t1, NULL);
     athread_join(t2, NULL);
     athread_join(t3, NULL);
 
-
     printf("c1 = %ld     c2 = %ld\n", c1, c2);
-
     return 0;
 
 }

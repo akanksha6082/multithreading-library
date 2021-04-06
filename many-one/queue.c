@@ -36,7 +36,7 @@ void display(queue * q){
 
     node * front = q->front;
     while(front){
-        printf("%5d", front->tcb->tid);
+        printf("%5d - %d\n", front->tcb->tid,front->tcb->thread_state);
         front = front->next;
     }
 
