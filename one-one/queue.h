@@ -18,7 +18,7 @@ void qinit( queue * );
 
 void enqueue(queue *, athread * );
 
-node * dequeue(queue *);
+void dequeue(queue *);
 
 void display(queue *);
 

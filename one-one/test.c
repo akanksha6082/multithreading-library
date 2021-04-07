@@ -13,20 +13,14 @@ void * f2(void *);
 athread_mutex_t mutex;
 
 void * f1(void * args){
-
-    int pid = getpid();
-    printf("pid = %d\n", pid);
-    printf("tid = %d\n", athread_self());
-
     while(run == 1){
         
-        c1++;
         athread_mutex_lock(&mutex);
+        c1++;
         c++;
         athread_mutex_unlock(&mutex);
        
     }
-   
     return (void*)200;
 }
 
@@ -35,15 +29,14 @@ void * f2(void * args){
     int a = 100;
     while(run == 1){
         
-        c2++;
         athread_mutex_lock(&mutex);
+        c2++;
         c++;
         athread_mutex_unlock(&mutex);
       
        
     }
-  
-    athread_exit((void*)100);
+    athread_exit((void*)a);
 }
 
 int main(){

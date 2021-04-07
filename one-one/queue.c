@@ -42,18 +42,20 @@ void enqueue(queue * q, athread * tcb){
 
 }
 
-node * dequeue(queue * q){
+void dequeue(queue * q){
 
     node * front = q->front;
 
     if(is_empty(q)){
-        return NULL;
+        qinit(q);
+        return;
     }
 
-    node * p = q->front;
-    q->front = q->front->next;
+    node * p = q->front->next;
+    free(q->front);
+    q->front = p;
     q->count --;
-    return p;
+    return;
     
 }
 

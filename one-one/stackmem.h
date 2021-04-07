@@ -5,6 +5,6 @@
 #include "utils.h"
 
 ptr_t _stack_allocate(size_t);
-int _deallocate_stack(void *, size_t);
+void _deallocate_stack(void *, size_t);
 
 #endif

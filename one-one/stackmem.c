@@ -30,14 +30,15 @@ ptr_t _stack_allocate( size_t stack_size) {
 }
 
 
-int _deallocate_stack(ptr_t stack_base, size_t stack_size){
+void _deallocate_stack(ptr_t stack_base, size_t stack_size){
     
+
     _uint page_size;
 
     /* Get the page size */
     page_size = get_page_size();
 
     /* Unmap the allocated stack along with the protection page */
-    return munmap(stack_base - page_size, stack_size + page_size);
+    munmap(stack_base - page_size, stack_size + page_size);
 
 }
