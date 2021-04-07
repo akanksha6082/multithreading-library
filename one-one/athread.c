@@ -15,7 +15,6 @@ static inline int _get_tls(_uint * addr){
  *  return value -  0 else errno
  */
 
-
 static inline int _futex(int *addr, int futex_op, int val) {
 
     /* use the system call wrapper around the futex system call */
@@ -37,13 +36,32 @@ static inline int _tgkill(int tgid, int tid, int sig) {
     return syscall(SYS_tgkill, tgid, tid, sig);
 }
 
+
+static void _cleanup_handler(void){
+    
+    while(!is_empty(&task_queue)){
+
+        node * target_thread = dequeue(&task_queue);
+        
+        _deallocate_stack(target_thread->tcb->stack_base, target_thread->tcb->stack_size);
+       
+
+        free(target_thread->tcb);
+        
+        target_thread->tcb = NULL;
+        
+        free(target_thread);
+        
+    }
+}
+
 /*initization routine handler*/
 int athread_init(){
 
     /*intialize the thread queue data structure*/
     qinit(&task_queue);
 
-    
+  
     /*get system allowed max threads*/
     max_allowed_threads = get_threads_limit();
 
@@ -59,20 +77,10 @@ int athread_init(){
     /*set initialization variable*/
     is_initialised = 1;
 
+    /*clean up handler when the main thread exits*/
+    atexit(_cleanup_handler);
+
     return 0;
-}
-
-/*change this later*/
-static void _cleanup_thread(athread * thread){
-
-    /*deallocate the stack of thread*/
-    _deallocate_stack(thread->stack_base, thread->stack_size);
-
-    
-    /*change the state of thread*/
-    thread->thread_state = ATHREAD_CREATE_JOINED;
-
-    return;
 }
 
 int _wrapper_start(void * argument){
@@ -84,9 +92,11 @@ int _wrapper_start(void * argument){
     /*returned to the called location via long jump*/
     if(setjmp(thread_block->thread_context) == 0){
         thread_block->return_value = thread_block->start_routine(thread_block->args);
-        
     }
-    
+
+    /*change the state of thread*/
+    thread_block->thread_state = ATHREAD_EXITED;
+
     return 0;
 }
 
@@ -135,13 +145,13 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
     /*check for customized attribute values else set the default thread attributes*/
     if(attr){
         
-        thread_block->thread_state = attr->detach_state ? attr->detach_state : ATHREAD_CREATE_JOINABLE;
+        thread_block->thread_state = attr->detach_state ? attr->detach_state : ATHREAD_JOINABLE;
         thread_block->stack_size = attr->stack_size ? attr->stack_size : stack_limit;
         thread_block->stack_base = attr->stack_addr ? attr->stack_addr : NULL ;
     }
     else{
         
-        thread_block->thread_state = ATHREAD_CREATE_JOINABLE;
+        thread_block->thread_state = ATHREAD_JOINABLE;
         thread_block->stack_size = stack_limit;
         thread_block->stack_base = NULL ;
 
@@ -199,28 +209,32 @@ int athread_join(athread_t thread_id, void ** return_value){
     /*search for target thread*/
     athread * join_thread = search_tcb(&task_queue, thread_id);
 
+    /*get the current thread*/
+    athread * calling_thread = _wrapper_athread_self();
+
     /*check for erros*/
     if(join_thread == NULL){
         return ESRCH;
     }
 
     /*check for the deadlock condition*/
-    if(join_thread->joining_on  == athread_self()){
+    if(join_thread->joining_on  == athread_self() || thread_id == athread_self()){
         return EDEADLK;
     }
 
     /*check for thread state*/
-    if(join_thread->thread_state == ATHREAD_CREATE_DETACHED || join_thread->thread_state == ATHREAD_CREATE_JOINED){
+    if(join_thread->thread_state == ATHREAD_DETACHED || join_thread->thread_state == ATHREAD_JOINED){
         return EINVAL;
     }
+
 
     /* wait on the thread's futex word -- returns if the value changes */
     /* kernel checks if the value at addr is the same as val; if so, it then blocks the calling thread*/
     _uint ret_val = _futex(&join_thread->futex, FUTEX_WAIT, join_thread->tid);
 
-
     /*change the satus of the target thread*/
-    join_thread->thread_state = ATHREAD_CREATE_JOINED;
+    join_thread->thread_state = ATHREAD_JOINED;
+
 
 
     if(errno != EAGAIN && ret_val == -1){
@@ -235,7 +249,6 @@ int athread_join(athread_t thread_id, void ** return_value){
         *(return_value) = ret;
     }
 
-    _cleanup_thread(join_thread);
     return 0;
 
 }
@@ -243,6 +256,7 @@ int athread_join(athread_t thread_id, void ** return_value){
 /*thread exit - terminates the thread*/
 void athread_exit(void * retval){
     
+
     /*get the calling threads tcb(thread control block)*/
     athread * current_thread = _wrapper_athread_self();
     
@@ -253,7 +267,8 @@ void athread_exit(void * retval){
     longjmp(current_thread->thread_context, 1);
 }
 
-/*thread detach - target thread state chnaged to detached*/
+
+/*thread detach - target thread state changed to detached*/
 int athread_detach(athread_t thread){
 
    
@@ -264,16 +279,17 @@ int athread_detach(athread_t thread){
         return ESRCH;
     }
 
-    if(target_thread->thread_state != ATHREAD_CREATE_JOINABLE ){
+    if(target_thread->thread_state != ATHREAD_JOINABLE ){
         return EINVAL;
     }
 
 
     /*change the state of thread as detached*/
-    target_thread->thread_state = ATHREAD_CREATE_DETACHED;
+    target_thread->thread_state = ATHREAD_DETACHED;
     
     return 0;
 }
+
 
 /*thread kill - sends signal to target thread*/
 int athread_kill(athread_t thread, int sig_num) {
@@ -285,7 +301,7 @@ int athread_kill(athread_t thread, int sig_num) {
         return ESRCH;
     }
 
-    if(a_thread->thread_state == ATHREAD_CREATE_JOINED){
+    if(a_thread->thread_state == ATHREAD_JOINED){
         return EINVAL;
     }
 
@@ -315,10 +331,12 @@ athread_t athread_self(void){
 
 }
 
+
 /*thread yield - self blocking operation on thread*/
 int athread_yield(void){
     return sched_yield();
 }
+
 
 /*thread equal - check if two threads are equal*/
 int athread_equal(athread_t thread1, athread_t thread2){

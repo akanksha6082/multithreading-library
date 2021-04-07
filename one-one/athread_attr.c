@@ -10,7 +10,7 @@ int athread_attr_init(athread_attr_t * attr){
         return EINVAL;
 
 	
-    attr->detach_state = ATHREAD_CREATE_JOINABLE;
+    attr->detach_state = ATHREAD_JOINABLE;
     attr->stack_size = get_stack_limit();
     attr->stack_addr = NULL;
 

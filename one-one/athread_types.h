@@ -39,10 +39,10 @@ typedef void * (*thread_start_t)(void *);
 /*thread state enumeration*/
 enum {
 
-    ATHREAD_CREATE_DETACHED,
-    ATHREAD_CREATE_JOINABLE,
-    ATHREAD_CREATE_JOINED,
-    ATHREAD_CREATE_EXITED
+    ATHREAD_DETACHED,
+    ATHREAD_JOINABLE,
+    ATHREAD_JOINED,
+    ATHREAD_EXITED,
 };
 
 
