@@ -37,6 +37,20 @@ static inline int _tgkill(int tgid, int tid, int sig) {
     return syscall(SYS_tgkill, tgid, tid, sig);
 }
 
+static void _cleanup_handler(void){
+
+    while(!is_empty(&task_queue)){
+        
+        node * thread = dequeue(&task_queue);
+
+        _deallocate_stack(thread->tcb->stack_base, thread->tcb->stack_size);
+
+        free(thread->tcb);
+        thread->tcb = NULL;
+        free(thread);
+    }
+}
+
 /*initization routine handler*/
 int athread_init(){
 
@@ -59,21 +73,13 @@ int athread_init(){
     /*set initialization variable*/
     is_initialised = 1;
 
+    /*set up the clean up handler*/
+    atexit(_cleanup_handler);
+
     return 0;
 }
 
 /*change this later*/
-static void _cleanup_thread(athread * thread){
-
-    /*deallocate the stack of thread*/
-    _deallocate_stack(thread->stack_base, thread->stack_size);
-
-    
-    /*change the state of thread*/
-    thread->thread_state = ATHREAD_CREATE_JOINED;
-
-    return;
-}
 
 int _wrapper_start(void * argument){
     
@@ -86,6 +92,8 @@ int _wrapper_start(void * argument){
         thread_block->return_value = thread_block->start_routine(thread_block->args);
         
     }
+
+    thread_block->thread_state = ATHREAD_CREATE_EXITED;
     
     return 0;
 }
@@ -205,7 +213,7 @@ int athread_join(athread_t thread_id, void ** return_value){
     }
 
     /*check for the deadlock condition*/
-    if(join_thread->joining_on  == athread_self()){
+    if(join_thread->joining_on  == athread_self() || thread_id == athread_self()){
         return EDEADLK;
     }
 
@@ -235,7 +243,6 @@ int athread_join(athread_t thread_id, void ** return_value){
         *(return_value) = ret;
     }
 
-    _cleanup_thread(join_thread);
     return 0;
 
 }
