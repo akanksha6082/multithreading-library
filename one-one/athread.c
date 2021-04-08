@@ -98,17 +98,8 @@ int _wrapper_start(void * argument){
     return 0;
 }
 
-static athread * _wrapper_athread_self(void){
-    _uint addr;
-
-    int return_value = _get_tls(&addr);
-
-    return (athread*)addr;
-    
-}
-
 /*thread create*/
-int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t start_routine, ptr_t args){
+int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t start_routine, vptr_t args){
     
     /*check for intialization*/
     if(!is_initialised){
@@ -133,7 +124,7 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
         return ENOMEM;
     }
 
-    ptr_t stack_top;
+    vptr_t stack_top;
 
     thread_block->args = args;
     thread_block->start_routine = start_routine;
@@ -175,10 +166,10 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
                                     CLONE_VM | CLONE_FS | CLONE_FILES |
                                     CLONE_SIGHAND | CLONE_THREAD |
                                     CLONE_SYSVSEM | CLONE_PARENT_SETTID |
-                                    CLONE_CHILD_CLEARTID | CLONE_SETTLS,
+                                    CLONE_CHILD_CLEARTID,
                                     thread_block,
                                     &thread_block->futex,
-                                    thread_block,
+                                    NULL,
                                     &thread_block->futex);
 
     /*check for errors*/                                
@@ -226,7 +217,6 @@ int athread_join(athread_t thread_id, void ** return_value){
     /* kernel checks if the value at addr is the same as val; if so, it then blocks the calling thread*/
     _uint ret_val = _futex(&join_thread->futex, FUTEX_WAIT, join_thread->tid);
 
-
     /*change the satus of the target thread*/
     join_thread->thread_state = ATHREAD_CREATE_JOINED;
 
@@ -250,9 +240,12 @@ int athread_join(athread_t thread_id, void ** return_value){
 /*thread exit - terminates the thread*/
 void athread_exit(void * retval){
     
+    /*get the calling thread thread-id*/
+    athread_t tid = athread_self();
+
     /*get the calling threads tcb(thread control block)*/
-    athread * current_thread = _wrapper_athread_self();
-    
+    athread * current_thread = search_tcb(&task_queue, tid);
+
     /*store the return value of the thread routine function*/
     void * return_value = &retval;
     current_thread->return_value = return_value;
@@ -315,11 +308,8 @@ int athread_kill(athread_t thread, int sig_num) {
 
 
 /*thread self - returns the thread id of the calling thread*/
-athread_t athread_self(void){
-
-    athread * calling_thread = _wrapper_athread_self();
-    return calling_thread->tid;
-
+inline athread_t athread_self(void){
+    return syscall(SYS_gettid);
 }
 
 /*thread yield - self blocking operation on thread*/
