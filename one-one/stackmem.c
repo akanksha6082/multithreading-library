@@ -1,9 +1,9 @@
 #include "stackmem.h"
 
 
-ptr_t _stack_allocate( size_t stack_size) {
+vptr_t _stack_allocate( size_t stack_size) {
     
-    ptr_t stack_base;
+    vptr_t stack_base;
     _uint page_size;
 
     /* Get the page size */
@@ -30,7 +30,7 @@ ptr_t _stack_allocate( size_t stack_size) {
 }
 
 
-void _deallocate_stack(ptr_t stack_base, size_t stack_size){
+void _deallocate_stack(vptr_t stack_base, size_t stack_size){
     
 
     _uint page_size;

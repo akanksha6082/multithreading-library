@@ -32,7 +32,7 @@ int athread_init(void);
  *  return type - 0 if succesful else error number
  */ 
 
-int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t start_routine, ptr_t args);
+int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t start_routine, vptr_t args);
 
 /*
  * param[1] - target thread id

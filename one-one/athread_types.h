@@ -20,6 +20,7 @@
 #include <sys/prctl.h>
 #include <stdatomic.h>
 #include <signal.h>
+#include <sys/syscall.h>
 
 /* spinlock status info */
 #define SPINLOCK_ACQUIRED       (1u)
@@ -28,7 +29,7 @@
 
 typedef pid_t athread_t;
 
-typedef void* ptr_t;
+typedef void* vptr_t;
 
 typedef uint64_t _uint;
 
@@ -66,7 +67,7 @@ typedef struct athread{
 
 
     /*stack base pointer*/
-    ptr_t stack_base;
+    vptr_t stack_base;
 
 
     /*stack size*/
@@ -78,11 +79,11 @@ typedef struct athread{
 
 
     /*thread arguments*/
-    ptr_t args;
+    vptr_t args;
 
     
     /*thread return value */
-    ptr_t return_value;
+    vptr_t return_value;
 
     
     
@@ -109,7 +110,7 @@ typedef struct athread_attr_t {
 
 
     /*pointer to stack base*/
-    ptr_t stack_addr;
+    vptr_t stack_addr;
 
 
     /*stack size*/
