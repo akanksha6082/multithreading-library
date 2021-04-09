@@ -15,9 +15,7 @@
 #include <sys/mman.h>
 #include <linux/futex.h>
 #include <syscall.h>
-#include <asm/prctl.h>
 #include <assert.h>
-#include <sys/prctl.h>
 #include <stdatomic.h>
 #include <signal.h>
 #include <sys/syscall.h>
