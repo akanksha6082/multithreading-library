@@ -13,7 +13,7 @@ void * f2(void *);
 athread_mutex_t mutex;
 
 void * f1(void * args){
-   
+
     while(run == 1){
         
         athread_mutex_lock(&mutex);
@@ -26,7 +26,6 @@ void * f1(void * args){
 }
 
 void * f2(void * args){
-    
     int a = 100;
     while(run == 1){
         

@@ -72,8 +72,6 @@ int athread_init(){
     return 0;
 }
 
-/*change this later*/
-
 int _wrapper_start(void * argument){
     
     athread * thread_block;

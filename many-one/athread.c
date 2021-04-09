@@ -213,7 +213,6 @@ int athread_equal(athread_t thread1, athread_t thread2){
 
 void athread_yield(){
     raise(SIGVTALRM);
-    return;
 }
 
 athread_t athread_self(void){
