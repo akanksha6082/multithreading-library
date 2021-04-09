@@ -2,11 +2,6 @@
 #include "athread.h"
 #include "stackmem.h"
 
-/* syscall wrapper to get the thread local storage */
-static inline int _get_tls(_uint * addr){
-    return syscall(SYS_arch_prctl, ARCH_GET_FS, addr);
-}
-
 /*    
  *  futex syscall
  *  param[1] - Pointer to the futex word,
@@ -15,13 +10,11 @@ static inline int _get_tls(_uint * addr){
  *  return value -  0 else errno
  */
 
-
 static inline int _futex(int *addr, int futex_op, int val) {
 
     /* use the system call wrapper around the futex system call */
     return syscall(SYS_futex, addr, futex_op, val, NULL, NULL, 0);
 }
-
 
 /*
  * sends a signal to a thread in the thread group
@@ -285,12 +278,11 @@ int athread_kill(athread_t thread, int sig_num) {
         return ESRCH;
     }
 
-    if(a_thread->thread_state == ATHREAD_CREATE_JOINED){
+    if(a_thread->thread_state == ATHREAD_CREATE_JOINED || a_thread->thread_state == ATHREAD_CREATE_EXITED){
         return EINVAL;
     }
 
-
-    uint32_t thread_group_id;
+    athread_t thread_group_id;
 
     /* get the thread group id */
     thread_group_id = getpid();
@@ -313,12 +305,12 @@ inline athread_t athread_self(void){
 }
 
 /*thread yield - self blocking operation on thread*/
-int athread_yield(void){
+inline int athread_yield(void){
     return sched_yield();
 }
 
 /*thread equal - check if two threads are equal*/
-int athread_equal(athread_t thread1, athread_t thread2){
+inline int athread_equal(athread_t thread1, athread_t thread2){
     return (thread1 == thread2);
 }
 
