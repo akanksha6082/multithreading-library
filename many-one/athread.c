@@ -180,7 +180,7 @@ int athread_create(athread_t * tid, thread_start_t start_routine, void * args){
 
     
     /*allocate the stack*/
-    ptr_t stack_base = _stack_allocate(stack_limit);
+    vptr_t stack_base = _stack_allocate(stack_limit);
     if(stack_base == NULL){
             sigprocmask(SIG_UNBLOCK, &sigset, NULL);
             return ENOMEM;

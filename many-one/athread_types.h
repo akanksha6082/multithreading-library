@@ -25,7 +25,7 @@
 
 
 typedef pid_t athread_t;
-typedef void *ptr_t;
+typedef void *vptr_t;
 typedef uint64_t _uint;
 
 /*thread start routine*/
@@ -63,11 +63,11 @@ typedef struct athread {
 
 
     /*function arguments*/
-    ptr_t args;
+    vptr_t args;
 
 
     /*return value of the thread start routine*/
-    ptr_t return_value;
+    vptr_t return_value;
 
 
     /*thread state*/
@@ -81,7 +81,7 @@ typedef struct athread {
     int detachstate;
 
     /*thread context*/
-    ucontext_t *thread_context;
+    jmp_buf *thread_context;
 
 
 } athread;

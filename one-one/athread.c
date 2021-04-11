@@ -2,6 +2,13 @@
 #include "athread.h"
 #include "stackmem.h"
 
+/*global definitions*/
+static size_t stack_limit;
+static _uint max_allowed_threads;
+static size_t page_size;
+static queue task_queue;
+static int is_initialised;
+
 /*    
  *  futex syscall
  *  param[1] - Pointer to the futex word,

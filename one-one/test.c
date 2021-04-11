@@ -6,14 +6,15 @@
 #define print(str) write(1, str, strlen(str))
 
 long int c = 0, c1 =0, c2 = 0, run = 1;
-
+int a;
 void * f1(void *);
 void * f2(void *);
 
 athread_mutex_t mutex;
 
 void * f1(void * args){
-
+    scanf("%d", &a);
+    printf("a = %d\n",a);
     while(run == 1){
         
         athread_mutex_lock(&mutex);
