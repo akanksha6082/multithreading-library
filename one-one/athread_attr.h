@@ -2,7 +2,7 @@
 #define __ATHREAD_ATTR_H
 
 #include "athread_types.h"
-#include "utils.h"
+
 
 int athread_attr_init(athread_attr_t * attr);
 int athread_attr_destroy(athread_attr_t *attr);

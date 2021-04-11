@@ -13,8 +13,6 @@ void * f2(void *);
 athread_mutex_t mutex;
 
 void * f1(void * args){
-    scanf("%d", &a);
-    printf("a = %d\n",a);
     while(run == 1){
         
         athread_mutex_lock(&mutex);
@@ -36,7 +34,7 @@ void * f2(void * args){
         athread_mutex_unlock(&mutex);
       
     }
-    athread_exit((void*)a);
+    athread_exit((void*)100);
 }
 
 int main(){

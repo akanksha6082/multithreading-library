@@ -1,6 +1,25 @@
 #define _GNU_SOURCE
+
+#include <stdlib.h>
+#include <sched.h>
+#include <errno.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <assert.h>
+#include <linux/futex.h>
+#include <syscall.h>
+#include <sys/syscall.h>
+
+
+
+
+
 #include "athread.h"
+#include "queue.h"
+#include "utils.h"
 #include "stackmem.h"
+#include "athread_attr.h"
 
 /*global definitions*/
 static size_t stack_limit;

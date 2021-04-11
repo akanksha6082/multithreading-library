@@ -1,4 +1,8 @@
+#include <stdlib.h>
+#include <sys/mman.h>
+
 #include "stackmem.h"
+#include "utils.h"
 
 
 vptr_t _stack_allocate( size_t stack_size) {

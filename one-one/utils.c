@@ -1,3 +1,6 @@
+#include <sys/resource.h>
+#include <unistd.h>
+
 #include "utils.h"
 
 

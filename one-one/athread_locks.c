@@ -1,3 +1,11 @@
+#define _GNU_SOURCE         
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <stdatomic.h>
+#include <assert.h>
+#include <errno.h>
+#include <linux/futex.h>
+
 #include "athread.h"
 
 /*    

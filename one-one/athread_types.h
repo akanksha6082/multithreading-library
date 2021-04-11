@@ -1,24 +1,11 @@
 #ifndef __ATHREAD_TYPES_H
 #define __ATHREAD_TYPES_H
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
-#include <sys/types.h>
 #include <stdint.h>
-#include <sched.h>
-#include <sys/resource.h>
-#include <sys/time.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <linux/futex.h>
-#include <syscall.h>
-#include <assert.h>
-#include <stdatomic.h>
-#include <signal.h>
-#include <sys/syscall.h>
+
+
 
 /* spinlock status info */
 #define SPINLOCK_ACQUIRED       (1u)
