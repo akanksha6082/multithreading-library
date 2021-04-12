@@ -295,6 +295,10 @@ int athread_detach(athread_t thread){
 /*thread kill - sends signal to target thread*/
 int athread_kill(athread_t thread, int sig_num) {
 
+    if(sig_num <= 0 || sig_num >= NSIG){
+        return EINVAL;
+    }
+
     athread * a_thread = search_tcb(&task_queue, thread);
 
     /*check for errors*/
