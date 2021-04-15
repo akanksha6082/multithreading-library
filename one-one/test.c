@@ -6,13 +6,17 @@
 #define print(str) write(1, str, strlen(str))
 
 long int c = 0, c1 =0, c2 = 0, run = 1;
-int a;
+
 void * f1(void *);
 void * f2(void *);
 
 athread_mutex_t mutex;
 
 void * f1(void * args){
+
+    int a = 100;
+    void * ptr = &a;
+
     while(run == 1){
         
         athread_mutex_lock(&mutex);
@@ -21,11 +25,13 @@ void * f1(void * args){
         athread_mutex_unlock(&mutex);
        
     }
-    return (void*)200;
+    return ptr;
 }
 
 void * f2(void * args){
-    int a = 100;
+
+    int a = 200;
+    void * p = &a;
     while(run == 1){
         
         athread_mutex_lock(&mutex);
@@ -34,7 +40,7 @@ void * f2(void * args){
         athread_mutex_unlock(&mutex);
       
     }
-    athread_exit((void*)100);
+    athread_exit(p);
 }
 
 int main(){
@@ -56,8 +62,8 @@ int main(){
     athread_join(t1, NULL);
     athread_join(t2, &retval);
     
-    printf("c = %ld  c1=%ld   c2 = %ld\n", c , c1, c2);
-    printf("return value = %d\n", *((int*)retval));
+    printf("c = %ld  c1 = %ld   c2 = %ld\n", c , c1, c2);
+    printf("return value = %d\n", *(int*)retval);
 
     athread_mutex_destroy(&mutex);
 
