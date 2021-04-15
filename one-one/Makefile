@@ -1,7 +1,7 @@
 target : test.o athread.o utils.o athread_attr.o stackmem.o queue.o athread_locks.o
 	cc test.o athread.o utils.o athread_attr.o stackmem.o queue.o athread_locks.o -o thread
 
-test.o : test.c athread.h
+test.o : test.c athread.h athread_attr.h
 	cc -c test.c
 athread.o : athread.c athread.h athread_attr.h utils.h stackmem.h queue.h athread_types.h
 	cc -c athread.c
