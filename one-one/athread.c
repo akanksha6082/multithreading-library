@@ -11,10 +11,6 @@
 #include <syscall.h>
 #include <sys/syscall.h>
 
-
-
-
-
 #include "athread.h"
 #include "queue.h"
 #include "utils.h"
@@ -27,6 +23,7 @@ static _uint max_allowed_threads;
 static size_t page_size;
 static queue task_queue;
 static int is_initialised;
+static athread_spinlock_t liblock;
 
 /*    
  *  futex syscall
@@ -73,28 +70,33 @@ static void _cleanup_handler(void){
 /*initization routine handler*/
 int athread_init(){
 
-    /*intialize the thread queue data structure*/
-    qinit(&task_queue);
+    if(is_initialised == 0){
+        
+        /*intialise the spinlock*/
+        athread_spin_init(&liblock);
 
-    
-    /*get system allowed max threads*/
-    max_allowed_threads = get_threads_limit();
+        /*intialize the thread queue data structure*/
+        qinit(&task_queue);
 
-    
-    /*get stack limit per thread*/
-    stack_limit = get_stack_limit();
+        
+        /*get system allowed max threads*/
+        max_allowed_threads = get_threads_limit();
 
-    
-    /*get page size*/
-    page_size = get_page_size();
+        
+        /*get stack limit per thread*/
+        stack_limit = get_stack_limit();
 
-    
-    /*set initialization variable*/
-    is_initialised = 1;
+        
+        /*get page size*/
+        page_size = get_page_size();
 
-    /*set up the clean up handler*/
-    atexit(_cleanup_handler);
+        
+        /*set initialization variable*/
+        is_initialised = 1;
 
+        /*set up the clean up handler*/
+        atexit(_cleanup_handler);
+    }
     return 0;
 }
 
@@ -118,6 +120,9 @@ int _wrapper_start(void * argument){
 /*thread create*/
 int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t start_routine, vptr_t args){
     
+
+    athread_spin_lock(&liblock);
+
     /*check for intialization*/
     if(!is_initialised){
         athread_init();
@@ -125,11 +130,14 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
 
     /*check for thread limit*/
     if(return_qcount(&task_queue) == max_allowed_threads){
+        athread_spin_unlock(&liblock);
         return EAGAIN;
     }
 
     /*check for errors*/
     if(!thread || !start_routine){
+
+        athread_spin_unlock(&liblock);
         return EAGAIN;
     }
 
@@ -138,6 +146,8 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
     athread * thread_block = (athread*)malloc(TCB_SIZE);
 
     if (!thread_block) {
+
+        athread_spin_unlock(&liblock);
         return ENOMEM;
     }
 
@@ -169,6 +179,8 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
         /*allocate the stack to thread*/
         thread_block->stack_base = _stack_allocate(thread_block->stack_size);
         if(thread_block->stack_base == NULL){
+
+            athread_spin_unlock(&liblock);
             return ENOMEM;
         }
     }
@@ -196,6 +208,7 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
         _deallocate_stack(thread_block->stack_base, thread_block->stack_size);
         free(thread_block);
 
+        athread_spin_unlock(&liblock);
         return EINVAL;
     }
 
@@ -205,6 +218,8 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
     /*set the thread id*/
     *thread = thread_block->tid;
 
+    athread_spin_unlock(&liblock);
+
     return 0;
 
 }
@@ -212,33 +227,46 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
 /*thread join - wait for target thread to terminate*/
 int athread_join(athread_t thread_id, void ** return_value){
     
+    athread_spin_lock(&liblock);
+
     /*search for target thread*/
     athread * join_thread = search_tcb(&task_queue, thread_id);
 
     /*check for erros*/
     if(join_thread == NULL){
+
+        athread_spin_unlock(&liblock);
         return ESRCH;
     }
 
     /*check for the deadlock condition*/
     if(join_thread->joining_on  == athread_self() || thread_id == athread_self()){
+        
+        athread_spin_unlock(&liblock);
         return EDEADLK;
     }
 
     /*check for thread state*/
     if(join_thread->thread_state == ATHREAD_CREATE_DETACHED || join_thread->thread_state == ATHREAD_CREATE_JOINED){
+        
+        athread_spin_unlock(&liblock);
         return EINVAL;
     }
+
+    athread_spin_unlock(&liblock);
 
     /* wait on the thread's futex word -- returns if the value changes */
     /* kernel checks if the value at addr is the same as val; if so, it then blocks the calling thread*/
     _uint ret_val = _futex(&join_thread->futex, FUTEX_WAIT, join_thread->tid);
 
+    athread_spin_lock(&liblock);
     /*change the satus of the target thread*/
     join_thread->thread_state = ATHREAD_CREATE_JOINED;
 
 
     if(errno != EAGAIN && ret_val == -1){
+
+        athread_spin_unlock(&liblock);
         return EINVAL;
     }
 
@@ -250,6 +278,8 @@ int athread_join(athread_t thread_id, void ** return_value){
         *(return_value) = ret;
     }
 
+    athread_spin_unlock(&liblock);
+
     return 0;
 
 }
@@ -257,6 +287,8 @@ int athread_join(athread_t thread_id, void ** return_value){
 /*thread exit - terminates the thread*/
 void athread_exit(void * retval){
     
+    athread_spin_lock(&liblock);
+
     /*get the calling thread thread-id*/
     athread_t tid = athread_self();
 
@@ -266,28 +298,35 @@ void athread_exit(void * retval){
     /*store the return value of the thread routine function*/
     void * return_value = &retval;
     current_thread->return_value = return_value;
-   
+    
+    athread_spin_unlock(&liblock);
+
     longjmp(current_thread->thread_context, 1);
 }
 
 /*thread detach - target thread state chnaged to detached*/
 int athread_detach(athread_t thread){
 
-   
+    athread_spin_lock(&liblock);
     athread * target_thread = search_tcb(&task_queue, thread);
 
     /*check for errors*/
     if(target_thread == NULL){
+        athread_spin_unlock(&liblock);
         return ESRCH;
     }
 
     if(target_thread->thread_state != ATHREAD_CREATE_JOINABLE ){
+
+        athread_spin_unlock(&liblock);
         return EINVAL;
     }
 
 
     /*change the state of thread as detached*/
     target_thread->thread_state = ATHREAD_CREATE_DETACHED;
+
+    athread_spin_unlock(&liblock);
     
     return 0;
 }
@@ -295,7 +334,11 @@ int athread_detach(athread_t thread){
 /*thread kill - sends signal to target thread*/
 int athread_kill(athread_t thread, int sig_num) {
 
+    athread_spin_lock(&liblock);
+
     if(sig_num <= 0 || sig_num >= NSIG){
+
+        athread_spin_unlock(&liblock);
         return EINVAL;
     }
 
@@ -303,10 +346,14 @@ int athread_kill(athread_t thread, int sig_num) {
 
     /*check for errors*/
     if(a_thread == NULL){
+
+        athread_spin_unlock(&liblock);
         return ESRCH;
     }
 
     if(a_thread->thread_state == ATHREAD_CREATE_JOINED || a_thread->thread_state == ATHREAD_CREATE_EXITED){
+        
+        athread_spin_unlock(&liblock);
         return EINVAL;
     }
 
@@ -318,11 +365,11 @@ int athread_kill(athread_t thread, int sig_num) {
     /* send the kill signal to the target thread */
     if (_tgkill(thread_group_id, a_thread->tid, sig_num) == -1) {
 
-        /* return error status */
+        athread_spin_unlock(&liblock);
         return EINVAL;
     }
 
-    /* return success status */
+    athread_spin_unlock(&liblock);
     return 0;
 }
 
