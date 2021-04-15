@@ -5,8 +5,6 @@
 #include <setjmp.h>
 #include <stdint.h>
 
-
-
 /* spinlock status info */
 #define SPINLOCK_ACQUIRED       (1u)
 #define SPINLOCK_NOT_ACQUIRED   (0u)
@@ -70,7 +68,6 @@ typedef struct athread{
     /*thread return value */
     vptr_t return_value;
 
-    
     
     /*futex word*/
     int32_t futex;	

@@ -79,9 +79,13 @@ int athread_attr_setstack(athread_attr_t *attr, void * stackaddr, size_t stacksi
             return EINVAL;
         attr->stack_addr = stackaddr;
         attr->stack_size = stacksize;
+        return 0;
 
     }
-    return EINVAL;
+    else{
+        return EINVAL;
+    }
+ 
 }
 
 int athread_attr_getstack(athread_attr_t *attr, void ** stackaddr, size_t *stacksize){
