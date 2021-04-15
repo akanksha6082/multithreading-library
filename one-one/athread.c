@@ -107,13 +107,12 @@ int _wrapper_start(void * argument){
 
 
     /*returned to the called location via long jump*/
-    if(setjmp(thread_block->thread_context) == 0){
+    if(setjmp(thread_block->thread_context) == 0){ 
+
         thread_block->return_value = thread_block->start_routine(thread_block->args);
-        
     }
 
     thread_block->thread_state = ATHREAD_CREATE_EXITED;
-    
     return 0;
 }
 
@@ -138,7 +137,7 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
     if(!thread || !start_routine){
 
         athread_spin_unlock(&liblock);
-        return EAGAIN;
+        return EINVAL;
     }
 
 
@@ -155,15 +154,15 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
 
     thread_block->args = args;
     thread_block->start_routine = start_routine;
-    thread_block->return_value = 0;
+    thread_block->return_value = NULL;
     thread_block->joining_on = -1;
 
     /*check for customized attribute values else set the default thread attributes*/
     if(attr){
         
-        thread_block->thread_state = attr->detach_state ? attr->detach_state : ATHREAD_CREATE_JOINABLE;
+        thread_block->thread_state = (attr->detach_state) == 0 ? ATHREAD_CREATE_DETACHED : ATHREAD_CREATE_JOINABLE;
         thread_block->stack_size = attr->stack_size ? attr->stack_size : stack_limit;
-        thread_block->stack_base = attr->stack_addr ? attr->stack_addr : NULL ;
+        thread_block->stack_base = (attr->stack_addr != NULL) ? attr->stack_addr : NULL ;
     }
     else{
         
@@ -209,7 +208,7 @@ int athread_create( athread_t *thread, athread_attr_t *attr, thread_start_t star
         free(thread_block);
 
         athread_spin_unlock(&liblock);
-        return EINVAL;
+        return EAGAIN;
     }
 
     /*enqueue thread*/
@@ -232,6 +231,12 @@ int athread_join(athread_t thread_id, void ** return_value){
     /*search for target thread*/
     athread * join_thread = search_tcb(&task_queue, thread_id);
 
+    /*if the target thread is the main thread*/
+    if(thread_id == getpid()){
+        athread_spin_unlock(&liblock);
+        return EINVAL;
+    }
+
     /*check for erros*/
     if(join_thread == NULL){
 
@@ -247,7 +252,7 @@ int athread_join(athread_t thread_id, void ** return_value){
     }
 
     /*check for thread state*/
-    if(join_thread->thread_state == ATHREAD_CREATE_DETACHED || join_thread->thread_state == ATHREAD_CREATE_JOINED){
+    if(join_thread->thread_state == ATHREAD_CREATE_DETACHED || join_thread->thread_state == ATHREAD_CREATE_JOINED){ 
         
         athread_spin_unlock(&liblock);
         return EINVAL;
@@ -272,10 +277,8 @@ int athread_join(athread_t thread_id, void ** return_value){
 
     /*set the target thread's exit status at the lcoation pointed by return_value*/
     if(return_value){
-        int ptr = *(int*)(join_thread->return_value);
-        int *p = &ptr;
-        void * ret = (void*)p;
-        *(return_value) = ret;
+        
+        *(return_value) = join_thread->return_value;
     }
 
     athread_spin_unlock(&liblock);
@@ -296,8 +299,7 @@ void athread_exit(void * retval){
     athread * current_thread = search_tcb(&task_queue, tid);
 
     /*store the return value of the thread routine function*/
-    void * return_value = &retval;
-    current_thread->return_value = return_value;
+    current_thread->return_value = retval;
     
     athread_spin_unlock(&liblock);
 
