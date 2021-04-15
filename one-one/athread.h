@@ -2,6 +2,7 @@
 #define __ATRHEAD_H
 
 #include "athread_types.h"
+#include "athread_attr.h"
 
 /* Size of thread control block */
 #define TCB_SIZE (sizeof(athread))
