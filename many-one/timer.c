@@ -16,18 +16,6 @@ void timer_enable(athread_timer_t *timer){
     return;
 }
 
-void timer_disable(athread_timer_t *timer){
-
-    timer->it_interval.tv_usec = 0;
-    timer->it_interval.tv_sec = 0;
-    timer->it_value.tv_usec = 0;
-    timer->it_value.tv_sec = 0;
-
-    setitimer(ITIMER_VIRTUAL, timer, 0);
-
-    return;
-}
-
 void block_signal(void){
     
     sigset_t tmp;

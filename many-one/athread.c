@@ -23,6 +23,8 @@ static athread *running_thread;
 static int is_initialised;
 static athread_t utid = 0;
 
+sigset_t sched_sigblock;
+
 void _cleanup_handler(void){
 
     int count = return_count(task_queue);
@@ -34,7 +36,6 @@ void _cleanup_handler(void){
         /*deallocate the stack*/
         _deallocate_stack(thread->stack_base, stack_limit);
      
-        
         thread = NULL;
 
         free(thread);
@@ -45,7 +46,7 @@ void _cleanup_handler(void){
 
 }
 
-athread * find_next_runnable(){
+static athread * find_next_runnable_thread(){
     
     if(is_empty(task_queue))
         return NULL;
@@ -76,18 +77,35 @@ void scheduler(int signum){
 
     block_signal();
 
-    athread * prev_thread = running_thread;
 
-    athread * next_thread = find_next_runnable();
+    athread * prev_thread = running_thread;
+    //printf("prev thread was : %d\n", prev_thread->tid);
+
+    athread * next_thread = find_next_runnable_thread();
+    
 
     if(next_thread == NULL){
         timer_enable(&timer);
         return;
     }
 
+    //printf("next thread was : %d\n", next_thread->tid);
+
     /* save context*/
-    if(sigsetjmp(running_thread->thread_context, 1) == 1)
+    if(sigsetjmp(running_thread->thread_context, 0) == 1){
+
+        sigprocmask(SIG_UNBLOCK, &sched_sigblock, NULL);
+        /*raise all pending signals*/
+        for(int signum = 1; signum < NSIG; signum++){
+
+            if( sigismember(&prev_thread->pending_signals, signum) == 1){
+                raise(signum);
+                sigdelset(&prev_thread->pending_signals, signum);
+            }
+        }
+        sigprocmask(SIG_BLOCK, &sched_sigblock, NULL);
         return;
+    }
 
     if(prev_thread->thread_state == RUNNING){
         prev_thread->thread_state = RUNNABLE;
@@ -96,14 +114,6 @@ void scheduler(int signum){
     next_thread->thread_state = RUNNING;
     running_thread = next_thread;
 
-    /*raise all pending signals*/
-    for(int signum = 1; signum < NSIG; signum++){
-
-        if( sigismember(&prev_thread->pending_signals, signum) == 1){
-            raise(signum);
-            sigdelset(&prev_thread->pending_signals, signum);
-        }
-    }
 
     unblock_signal();
 
@@ -111,7 +121,7 @@ void scheduler(int signum){
     timer_enable(&timer);
     
     /*context switch*/
-    longjmp(running_thread->thread_context, 1);
+    siglongjmp(running_thread->thread_context, 0);
 
 }
 
@@ -162,7 +172,7 @@ int athread_init(void){
     running_thread = main_thread;
 
     /*get context*/
-    sigsetjmp(main_thread->thread_context, 1);
+    sigsetjmp(main_thread->thread_context, 0);
 
     /*enqueue the thread control block*/
     enqueue(task_queue, main_thread);
@@ -170,7 +180,7 @@ int athread_init(void){
     /*set up the signal handler*/
     struct sigaction act;
 
-    sigset_t sched_sigblock;
+    // sigset_t sched_sigblock;
     sigfillset(&sched_sigblock);
     
     act.sa_handler = scheduler;
