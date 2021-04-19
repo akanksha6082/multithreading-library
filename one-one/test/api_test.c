@@ -1,5 +1,4 @@
 /*
- * Robust test
  * validates the standarad interface provided by library
 */
 
@@ -7,42 +6,37 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include "athread.h"
 
-#define CHECK(CALL)                                                             \
-    {                                                                           \
-        int result;                                                             \
-        if ((result = (CALL)) != 0) {                                           \
-            fprintf(stderr, "\nERROR: %s (%s)\n\n", strerror(result), #CALL);   \
-        }                                                                       \
-    }    
-
 //jiska expected result is zero
-#define CHECK_PASS(CALL)                                                        \
-    {                                                                           \
-        int result;                                                             \
-        if ((result = (CALL)) == 0) {                                           \
-            fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n");                \
-        }                                                                       \
-        else{                                                                   \
-            fprintf(stderr, "\nERROR: %s (%s)\n\n", strerror(result), #CALL);   \
-            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");                \
-        }                                                                       \
-                                                                                \
-    }                                                                           \
-
+void CHECK_PASS(int return_value){
+    if(return_value == 0){
+        fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n"); 
+    }
+    else{
+        fprintf(stderr, "\nERROR: %s (%d)\n\n", strerror(return_value), return_value);   
+        fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
+    }
+}      
+                                                                    
 //jiska expected result is error
-#define CHECK_FAIL(CALL)                                                        \
-    {                                                                           \
-        int result;                                                             \
-        if ((result = (CALL)) != 0) {                                           \
-            fprintf(stderr, "\nERROR: %s (%s)\n\n", strerror(result), #CALL);   \
-            fprintf(stdout, "\033[0;32mTEST PASS\033[0m\n\n");                  \
-        }                                                                       \
-        else{                                                                   \
-            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");                \
-        }                                                                       \
-    }                                                                           \
+void CHECK_FAIL(int return_value){
+    if(return_value != 0){
+        fprintf(stderr, "\nERROR: %s (%d)\n\n", strerror(return_value), return_value);   
+        fprintf(stdout, "\033[0;32mTEST PASS\033[0m\n\n");
+    }else{
+        fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
+    }
+}
+
+void CHECK(int return_value){
+    if(return_value != 0){
+        fprintf(stderr, "\nERROR: %s (%d)\n\n", strerror(return_value), return_value);
+    }
+}
+
+
 
 void * thread_1(void * args){
     int a = 100;
@@ -55,6 +49,53 @@ void * thread_2(void* args){
     void * ptr = &a;
     sleep(3);
     return ptr;
+}
+
+/*thread returns using return keyword*/
+void * ret_thread(void* args){
+    int a = 500;
+    void * ptr = &a;
+    printf("Thread return using return keyword\n\n");
+    sleep(5);
+    return ptr;
+}
+
+/*thread returns using athread_exit() interface */
+void * exit_thread(void * args) {
+    int a = 700;
+    void * ptr = &a;
+    printf("Thread return using athread_exit api\n\n");
+    
+    athread_exit(ptr);
+}
+
+void exit_thread_sub_func(int a){
+
+    int ret = a;
+    void * ptr = &ret;
+    printf("thread exit from sub function\n");
+    athread_exit(ptr);
+}
+
+/*thread return via sub function*/
+void * exit_thread_sub(void * args) {
+    
+    int a = 800;
+    printf("call to sub function\n");
+    exit_thread_sub_func(a);
+    return NULL;
+}
+
+
+void handler(int signum){
+    printf("thread recieved SIGINT(%d) signal\n", signum);
+}
+
+void * signal_thread(void * args){
+
+    signal(SIGINT, handler);
+    while(1);
+    
 }
 
 int main(int argc, char ** argv){
@@ -213,6 +254,97 @@ int main(int argc, char ** argv){
             fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
         }
     }
+
+    fprintf(stdout, "=============================\n");
+    fprintf(stdout, "    THREAD EXIT\n");
+    fprintf(stdout, "=============================\n");
+
+    fprintf(stdout, "\n\033[1;34mcase 1 : thread return using return keyword\033[0m\n");
+    {
+        athread_t tid;
+
+        CHECK(athread_create(&tid, NULL, ret_thread, NULL));
+
+        void * return_value;
+        
+        CHECK(athread_join(tid, &return_value));
+        
+
+        printf("expected return value  - 500\n");
+        printf("collected return value - %d\n", *(int*)return_value);
+    
+        if (*(int*)return_value == 500) {
+            fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n"); 
+        } else {
+            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
+        }
+
+    }
+
+    fprintf(stdout, "\n\033[1;34mcase 2 : thread return using athread_exit()\033[0m\n");
+    {
+        athread_t tid;
+
+        CHECK(athread_create(&tid, NULL, exit_thread, NULL));
+
+        void * return_value;
+        
+        CHECK(athread_join(tid, &return_value));
+
+        printf("expected return value  - 700\n");
+        printf("collected return value - %d\n", *(int*)return_value);
+
+        if (*(int*)return_value == 700) {
+            fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n"); 
+        } else {
+            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
+        }
+
+    }
+
+    fprintf(stdout, "\n\033[1;34mcase 3 : thread return from sub function\033[0m\n");
+    {
+        athread_t tid;
+
+        CHECK(athread_create(&tid, NULL, exit_thread_sub, NULL));
+
+        void * return_value;
+        
+        CHECK(athread_join(tid, &return_value));
+
+        printf("expected return value  - 800\n");
+        printf("collected return value - %d\n", *(int*)return_value);
+
+        if (*(int*)return_value == 800) {
+            fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n"); 
+        } else {
+            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
+        }
+
+    }
+
+    // fprintf(stdout, "=============================\n");
+    // fprintf(stdout, "    THREAD KILL\n");
+    // fprintf(stdout, "=============================\n");
+
+    // fprintf(stdout, "\n\033[1;34mcase 1 : Thread directed signal dispositions \033[0m\n");
+    // {
+    //     athread_t tid;
+    //     CHECK(athread_create(&tid, NULL, signal_thread, NULL ));
+    //     printf("created an ifnintely looping thread\n");
+    //     printf("sending SIGINT signal\n");
+    //     athread_kill(tid, SIGINT);
+    // }
+
+
+    // fprintf(stdout, "\n\033[1;34mcase 2 : process directed signal dispositions \033[0m\n");
+    // {
+    //     athread_t tid;
+    //     CHECK(athread_create(&tid, NULL, signal_thread, NULL ));
+    //     printf("created an ifnintely looping thread\n");
+    //     printf("sending SIGKILL signal\n");
+    //     athread_kill(tid, SIGKILL);
+    // }
     
     return 0;
 }
