@@ -33,3 +33,17 @@ void unblock_signal(void){
     return;
     
 }
+
+void block_all_signals(){
+    sigset_t tmp;
+    sigfillset(&tmp);
+    sigprocmask(SIG_BLOCK, &tmp, NULL);
+    return;
+}
+
+void unblock_all_signals(){
+    sigset_t tmp;
+    sigfillset(&tmp);
+    sigprocmask(SIG_UNBLOCK, &tmp, NULL);
+    return;
+}

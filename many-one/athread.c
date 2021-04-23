@@ -23,7 +23,6 @@ static athread *running_thread;
 static int is_initialised;
 static athread_t utid = 0;
 
-sigset_t sched_sigblock;
 
 void _cleanup_handler(void){
 
@@ -74,12 +73,9 @@ static athread * find_next_runnable_thread(){
 
 void scheduler(int signum){
 
-
     block_signal();
-
-
+   
     athread * prev_thread = running_thread;
-    //printf("prev thread was : %d\n", prev_thread->tid);
 
     athread * next_thread = find_next_runnable_thread();
     
@@ -89,12 +85,15 @@ void scheduler(int signum){
         return;
     }
 
-    //printf("next thread was : %d\n", next_thread->tid);
-
     /* save context*/
-    if(sigsetjmp(running_thread->thread_context, 0) == 1){
+    if(sigsetjmp(running_thread->thread_context, 1) == 1){
 
-        sigprocmask(SIG_UNBLOCK, &sched_sigblock, NULL);
+        
+        sigset_t tmp;
+        sigfillset(&tmp);
+        sigdelset(&tmp, SIGVTALRM);
+        sigprocmask(SIG_UNBLOCK, &tmp, NULL);
+        
         /*raise all pending signals*/
         for(int signum = 1; signum < NSIG; signum++){
 
@@ -103,7 +102,6 @@ void scheduler(int signum){
                 sigdelset(&prev_thread->pending_signals, signum);
             }
         }
-        sigprocmask(SIG_BLOCK, &sched_sigblock, NULL);
         return;
     }
 
@@ -114,21 +112,16 @@ void scheduler(int signum){
     next_thread->thread_state = RUNNING;
     running_thread = next_thread;
 
-
-    unblock_signal();
-
     /*restart the timer*/
     timer_enable(&timer);
     
     /*context switch*/
-    siglongjmp(running_thread->thread_context, 0);
+    siglongjmp(running_thread->thread_context, 1);
 
 }
 
 static void _wrapper_start(void){
     
-    unblock_signal();
-
     sigset_t signals;
     sigfillset(&signals);
     sigprocmask(SIG_UNBLOCK, &signals, NULL);
@@ -172,19 +165,16 @@ int athread_init(void){
     running_thread = main_thread;
 
     /*get context*/
-    sigsetjmp(main_thread->thread_context, 0);
+    sigsetjmp(main_thread->thread_context, 1);
 
     /*enqueue the thread control block*/
     enqueue(task_queue, main_thread);
 
     /*set up the signal handler*/
     struct sigaction act;
-
-    // sigset_t sched_sigblock;
-    sigfillset(&sched_sigblock);
     
     act.sa_handler = scheduler;
-    act.sa_mask = sched_sigblock;
+    sigfillset(&act.sa_mask);
     act.sa_flags = SA_RESTART;
 
     sigaction(SIGVTALRM, &act, NULL);
@@ -280,15 +270,15 @@ int athread_join(athread_t thread_id, void ** return_value){
     }
 
     /*check if thread is joinable*/
-    if(join_thread->detachstate == ATHREAD_CREATE_JOINED || join_thread->detachstate == ATHREAD_CREATE_DETACHED){
+    if(join_thread->detachstate != ATHREAD_CREATE_JOINABLE){
         unblock_signal();
         return EINVAL;
     }
 
     /*change state*/
-    running_thread->thread_state = WAITING;
     join_thread->joining_on = running_thread->tid;
-
+    running_thread->thread_state = WAITING;
+    
     unblock_signal();
 
     while(join_thread->thread_state != EXITED);
@@ -296,11 +286,7 @@ int athread_join(athread_t thread_id, void ** return_value){
     join_thread->detachstate = ATHREAD_CREATE_JOINED;
 
     if(return_value){
-
-        int ptr = *(int*)(join_thread->return_value);
-        int *p = &ptr;
-        void * ret = (void*)p;
-        *(return_value) = ret;
+        *(return_value) = join_thread->return_value;
     }
 
     
@@ -327,9 +313,11 @@ void athread_exit(void * retval){
     running_thread->return_value = retval;
 
     /*change the thread state*/
-    running_thread->thread_state = ATHREAD_CREATE_EXITED;
+    running_thread->thread_state = EXITED;
+    running_thread->detachstate = ATHREAD_CREATE_EXITED;
 
     if(running_thread->joining_on != -1){
+        
         athread * target_thread = search_tcb(task_queue, running_thread->joining_on);
         target_thread->thread_state = RUNNABLE;
     }

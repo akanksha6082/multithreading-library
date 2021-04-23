@@ -58,7 +58,7 @@ void signal_handler(int signum){
 void * f4(void * args){
     
     printf("f4\n");
-    signal(SIGSEGV, signal_handler);
+    signal(SIGALRM, signal_handler);
     while(1);
 }
 
@@ -76,7 +76,7 @@ int main(int argc, char * argv[]){
 
     for(int i=0; i<100000000; i++){
         if(i == 100000){
-            athread_kill(t4, SIGSEGV);
+            athread_kill(t4, SIGALRM);
         }
     }
 
@@ -89,9 +89,10 @@ int main(int argc, char * argv[]){
     printf("\nc = %ld c1 = %ld c2 = %ld  c3 = %ld\n",c, c1, c2, c3);
 
      for(int i=0; i<100000000; i++){
-        if(i == 100000){
+        if(i == 0){
             printf("raised signal for f4\n");
-            athread_kill(t4, SIGSEGV);
+            athread_kill(t4, SIGALRM);
+            printf("after raising signal fro f4()\n");
         }
     }
 
