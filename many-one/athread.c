@@ -3,6 +3,7 @@
 #include <setjmp.h>
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
 
 #include "athread.h"
 #include "mangle.h"
@@ -87,7 +88,6 @@ void scheduler(int signum){
 
     /* save context*/
     if(sigsetjmp(running_thread->thread_context, 1) == 1){
-
         
         sigset_t tmp;
         sigfillset(&tmp);
@@ -97,9 +97,9 @@ void scheduler(int signum){
         /*raise all pending signals*/
         for(int signum = 1; signum < NSIG; signum++){
 
-            if( sigismember(&prev_thread->pending_signals, signum) == 1){
+            if( sigismember(&running_thread->pending_signals, signum) == 1){
                 raise(signum);
-                sigdelset(&prev_thread->pending_signals, signum);
+                sigdelset(&running_thread->pending_signals, signum);
             }
         }
         return;
@@ -122,9 +122,7 @@ void scheduler(int signum){
 
 static void _wrapper_start(void){
     
-    sigset_t signals;
-    sigfillset(&signals);
-    sigprocmask(SIG_UNBLOCK, &signals, NULL);
+    unblock_signal();
 
     /*call to thread start routine*/
     vptr_t * return_value = running_thread->start_routine(running_thread->args);
@@ -217,7 +215,7 @@ int athread_create(athread_t * thread, thread_start_t start_routine, void * args
     sigemptyset(&current->pending_signals);
 
     /*make context*/
-    setjmp(current->thread_context);
+    sigsetjmp(current->thread_context, 1);
 
     /*allocate thread stack*/
     vptr_t stack_base = _stack_allocate(stack_limit);
@@ -229,10 +227,7 @@ int athread_create(athread_t * thread, thread_start_t start_routine, void * args
 
     current->stack_base = stack_base;
     vptr_t stack_top = stack_base + stack_limit;
-    
-    
-    /*make thread context*/
-    sigsetjmp(current->thread_context, 1);
+
     
     /*change the stack pointer to point to top of the stack*/
     current->thread_context[0].__jmpbuf[JB_SP] = i64_ptr_mangle((long int)stack_top - sizeof(long int));
