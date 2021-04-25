@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <sched.h>
 #include <errno.h>
@@ -251,8 +252,17 @@ int athread_join(athread_t thread_id, void ** return_value){
         return EDEADLK;
     }
 
+    if(join_thread->thread_state == ATHREAD_CREATE_EXITED){
+
+        if(return_value){
+            *(return_value) = NULL;
+        }
+        athread_spin_unlock(&liblock);
+        return 0;
+    }
+
     /*check for thread state*/
-    if(join_thread->thread_state == ATHREAD_CREATE_DETACHED || join_thread->thread_state == ATHREAD_CREATE_JOINED){ 
+    if(join_thread->thread_state != ATHREAD_CREATE_JOINABLE){
         
         athread_spin_unlock(&liblock);
         return EINVAL;
@@ -265,6 +275,7 @@ int athread_join(athread_t thread_id, void ** return_value){
     _uint ret_val = _futex(&join_thread->futex, FUTEX_WAIT, join_thread->tid);
 
     athread_spin_lock(&liblock);
+
     /*change the satus of the target thread*/
     join_thread->thread_state = ATHREAD_CREATE_JOINED;
 
