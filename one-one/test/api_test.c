@@ -9,34 +9,40 @@
 #include <signal.h>
 #include "athread.h"
 
+#define CHECK(CALL)                                                             \
+    {                                                                           \
+        int result;                                                             \
+        if ((result = (CALL)) != 0) {                                           \
+            fprintf(stderr, "\nERROR: %s (%s)\n\n", strerror(result), #CALL);   \
+        }                                                                       \
+    }    
+
 //jiska expected result is zero
-void CHECK_PASS(int return_value){
-    if(return_value == 0){
-        fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n"); 
-    }
-    else{
-        fprintf(stderr, "\nERROR: %s (%d)\n\n", strerror(return_value), return_value);   
-        fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
-    }
-}      
-                                                                    
+#define CHECK_PASS(CALL)                                                        \
+    {                                                                           \
+        int result;                                                             \
+        if ((result = (CALL)) == 0) {                                           \
+            fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n");                \
+        }                                                                       \
+        else{                                                                   \
+            fprintf(stderr, "\nERROR: %s (%s)\n\n", strerror(result), #CALL);   \
+            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");                \
+        }                                                                       \
+                                                                                \
+    }                                                                           \
+
 //jiska expected result is error
-void CHECK_FAIL(int return_value){
-    if(return_value != 0){
-        fprintf(stderr, "\nERROR: %s (%d)\n\n", strerror(return_value), return_value);   
-        fprintf(stdout, "\033[0;32mTEST PASS\033[0m\n\n");
-    }else{
-        fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
-    }
-}
-
-void CHECK(int return_value){
-    if(return_value != 0){
-        fprintf(stderr, "\nERROR: %s (%d)\n\n", strerror(return_value), return_value);
-    }
-}
-
-
+#define CHECK_FAIL(CALL)                                                        \
+    {                                                                           \
+        int result;                                                             \
+        if ((result = (CALL)) != 0) {                                           \
+            fprintf(stderr, "\nERROR: %s (%s)\n\n", strerror(result), #CALL);   \
+            fprintf(stdout, "\033[0;32mTEST PASS\033[0m\n\n");                  \
+        }                                                                       \
+        else{                                                                   \
+            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");                \
+        }                                                                       \
+    }                                                                           \
 
 void * thread_1(void * args){
     int a = 100;
@@ -47,7 +53,6 @@ void * thread_1(void * args){
 void * thread_2(void* args){
     int a = 200;
     void * ptr = &a;
-    sleep(3);
     return ptr;
 }
 
@@ -56,7 +61,6 @@ void * ret_thread(void* args){
     int a = 500;
     void * ptr = &a;
     printf("Thread return using return keyword\n\n");
-    sleep(5);
     return ptr;
 }
 
@@ -86,14 +90,8 @@ void * exit_thread_sub(void * args) {
     return NULL;
 }
 
-
-void handler(int signum){
-    printf("thread recieved SIGINT(%d) signal\n", signum);
-}
-
 void * signal_thread(void * args){
 
-    signal(SIGINT, handler);
     while(1);
     
 }
@@ -184,9 +182,20 @@ int main(int argc, char ** argv){
     {
         athread_t tid;
         athread_attr_t attr;
+        int state;
         CHECK(athread_attr_init(&attr));
         CHECK(athread_attr_setdetachstate(&attr, ATHREAD_CREATE_DETACHED));
-        CHECK_PASS(athread_create(&tid, &attr, thread_1, NULL));
+        CHECK(athread_attr_getdetachstate(&attr, &state));
+        CHECK(athread_create(&tid, &attr, thread_1, NULL));
+        if(state == 0){
+            fprintf(stdout, "created detached thread\n");  
+        }
+        else{
+            fprintf(stdout, "failed to created detached thread\n");
+        }
+        
+        fprintf(stdout, "Joining on detached thread\n");
+        CHECK_FAIL(athread_join(tid, NULL ));
     }
 
     fprintf(stdout, "=============================\n");
@@ -323,28 +332,18 @@ int main(int argc, char ** argv){
 
     }
 
-    // fprintf(stdout, "=============================\n");
-    // fprintf(stdout, "    THREAD KILL\n");
-    // fprintf(stdout, "=============================\n");
+    fprintf(stdout, "=============================\n");
+    fprintf(stdout, "    THREAD KILL\n");
+    fprintf(stdout, "=============================\n");
 
-    // fprintf(stdout, "\n\033[1;34mcase 1 : Thread directed signal dispositions \033[0m\n");
-    // {
-    //     athread_t tid;
-    //     CHECK(athread_create(&tid, NULL, signal_thread, NULL ));
-    //     printf("created an ifnintely looping thread\n");
-    //     printf("sending SIGINT signal\n");
-    //     athread_kill(tid, SIGINT);
-    // }
-
-
-    // fprintf(stdout, "\n\033[1;34mcase 2 : process directed signal dispositions \033[0m\n");
-    // {
-    //     athread_t tid;
-    //     CHECK(athread_create(&tid, NULL, signal_thread, NULL ));
-    //     printf("created an ifnintely looping thread\n");
-    //     printf("sending SIGKILL signal\n");
-    //     athread_kill(tid, SIGKILL);
-    // }
+    fprintf(stdout, "\n\033[1;34mcase 1 :  Testing SIGINT signal \033[0m\n");
+    {
+        athread_t tid;
+        CHECK(athread_create(&tid, NULL, signal_thread, NULL ));
+        printf("created an infintely looping thread\n");
+        printf("sending SIGINT signal\n");
+        athread_kill(tid, SIGINT);
+    }
     
     return 0;
 }
