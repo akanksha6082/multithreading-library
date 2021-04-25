@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include <signal.h>
 #include "athread.h"
 
@@ -52,7 +53,7 @@ void * f3(void * args){
     athread_exit(NULL);
 }
 void signal_handler(int signum){
-    printf("f4 recieved sigint signal");
+    printf("f4 recieved %s signal\n", strsignal(signum));
 }
 
 void * f4(void * args){
@@ -87,16 +88,12 @@ int main(int argc, char * argv[]){
     athread_join(t3, NULL);
 
     printf("\nc = %ld c1 = %ld c2 = %ld  c3 = %ld\n",c, c1, c2, c3);
-
-     for(int i=0; i<100000000; i++){
+  
+    for(int i=0; i<100000000; i++){
         if(i == 0){
-            printf("raised signal for f4\n");
             athread_kill(t4, SIGALRM);
-            printf("after raising signal fro f4()\n");
         }
     }
-
-    printf("\nexiting from main thread\n");
 
     athread_spin_destroy(&spinlock);
     return 0;

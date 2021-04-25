@@ -25,6 +25,5 @@ athread * search_tcb(queue *, athread_t);
 int is_empty(queue *);
 int return_count(queue *);
 
-
 #endif
 

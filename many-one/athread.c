@@ -3,7 +3,6 @@
 #include <setjmp.h>
 #include <errno.h>
 #include <signal.h>
-#include <string.h>
 
 #include "athread.h"
 #include "mangle.h"
@@ -23,7 +22,6 @@ static queue *task_queue;
 static athread *running_thread;
 static int is_initialised;
 static athread_t utid = 0;
-
 
 void _cleanup_handler(void){
 
@@ -72,20 +70,17 @@ static athread * find_next_runnable_thread(){
     return NULL;
 }
 
-void scheduler(int signum){
+static void scheduler(int signum){
 
-    block_signal();
-   
     athread * prev_thread = running_thread;
 
     athread * next_thread = find_next_runnable_thread();
     
-
     if(next_thread == NULL){
         timer_enable(&timer);
         return;
     }
-
+    
     /* save context*/
     if(sigsetjmp(running_thread->thread_context, 1) == 1){
         
@@ -105,6 +100,8 @@ void scheduler(int signum){
         return;
     }
 
+    
+
     if(prev_thread->thread_state == RUNNING){
         prev_thread->thread_state = RUNNABLE;
     }
@@ -114,18 +111,18 @@ void scheduler(int signum){
 
     /*restart the timer*/
     timer_enable(&timer);
-    
+ 
     /*context switch*/
     siglongjmp(running_thread->thread_context, 1);
 
 }
 
 static void _wrapper_start(void){
-    
+
     unblock_signal();
 
     /*call to thread start routine*/
-    vptr_t * return_value = running_thread->start_routine(running_thread->args);
+    vptr_t return_value = running_thread->start_routine(running_thread->args);
     
     /*explicit call to athread_exit*/
     athread_exit(return_value);
@@ -163,7 +160,7 @@ int athread_init(void){
     running_thread = main_thread;
 
     /*get context*/
-    sigsetjmp(main_thread->thread_context, 1);
+    //sigsetjmp(main_thread->thread_context, 1);
 
     /*enqueue the thread control block*/
     enqueue(task_queue, main_thread);
@@ -264,6 +261,15 @@ int athread_join(athread_t thread_id, void ** return_value){
         return EDEADLK;
     }
 
+    if(join_thread->detachstate == ATHREAD_CREATE_EXITED){
+       
+        if(return_value){
+            *(return_value) = NULL;
+        }
+        unblock_signal();
+        return 0;
+    }
+
     /*check if thread is joinable*/
     if(join_thread->detachstate != ATHREAD_CREATE_JOINABLE){
         unblock_signal();
@@ -303,10 +309,10 @@ int athread_equal(athread_t thread1, athread_t thread2){
 void athread_exit(void * retval){
 
     block_signal();
-
+    
     /*save the thread return value*/
     running_thread->return_value = retval;
-
+  
     /*change the thread state*/
     running_thread->thread_state = EXITED;
     running_thread->detachstate = ATHREAD_CREATE_EXITED;

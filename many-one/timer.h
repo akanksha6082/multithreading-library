@@ -12,9 +12,7 @@ void timer_enable(athread_timer_t  *timer);
 void timer_disable(athread_timer_t *timer);
 
 void block_signal(void);
-void block_all_signals(void);
 
 void unblock_signal(void);
-void unblock_all_signals(void);
 
 #endif
