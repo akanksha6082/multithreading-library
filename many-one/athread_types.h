@@ -28,8 +28,8 @@ typedef enum athread_state {
 /*detach state*/
 typedef enum detach_state{
     
-    ATHREAD_CREATE_JOINABLE,
     ATHREAD_CREATE_DETACHED,
+    ATHREAD_CREATE_JOINABLE,
     ATHREAD_CREATE_JOINED,
     ATHREAD_CREATE_EXITED,
     
@@ -78,6 +78,23 @@ typedef struct athread {
 
 } athread;
 
+
+/*thread attribute structure*/
+typedef struct athread_attr_t {
+    
+    /* detach state of thread */
+    int detach_state;
+
+
+    /*pointer to stack base*/
+    vptr_t stack_addr;
+
+
+    /*stack size*/
+    size_t stack_size;
+    
+
+} athread_attr_t;
 
 /*lock status enumeration*/
 typedef enum lock_state {
