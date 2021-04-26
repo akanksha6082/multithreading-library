@@ -207,7 +207,7 @@ int main(int argc, char ** argv){
     fprintf(stdout, "\n\033[1;34mcase 2 : thread join on itself\033[0m\n");
     {
         athread_t tid;
-        CHECK(athread_join(athread_self(), NULL));
+        CHECK_FAIL(athread_join(athread_self(), NULL));
         
     }
 
