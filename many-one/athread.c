@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <errno.h>
@@ -180,7 +179,7 @@ int athread_init(void){
     return 0;
 }
 
-int athread_create(athread_t * thread, thread_start_t start_routine, void * args){
+int athread_create(athread_t * thread, athread_attr_t * attr, thread_start_t start_routine, void * args){
     
     if(!is_initialised)
         athread_init();
@@ -199,32 +198,49 @@ int athread_create(athread_t * thread, thread_start_t start_routine, void * args
     
     if(current == NULL){
         unblock_signal();
-        return ENOMEM;
+        return EAGAIN;
     }
 
     current->tid = utid++;
     current->start_routine = start_routine;
     current->args = args;
     current->return_value = NULL;
-    current->detachstate = ATHREAD_CREATE_JOINABLE;
     current->thread_state = RUNNABLE;
     current->joining_on = -1;
     sigemptyset(&current->pending_signals);
-
+    
+    if(attr != NULL){
+        current->detachstate = attr->detach_state;
+    }
+    else{
+        current->detachstate = ATHREAD_CREATE_JOINABLE;
+    }
+    
     /*make context*/
     sigsetjmp(current->thread_context, 1);
 
-    /*allocate thread stack*/
-    vptr_t stack_base = _stack_allocate(stack_limit);
-    
+    vptr_t stack_base = NULL;
+    size_t stack_size;
+
+    if(attr != NULL){
+        stack_size = attr->stack_size;
+        stack_base = attr->stack_addr;
+    }
+    else{
+        stack_size = stack_limit;
+    }
+
     if(stack_base == NULL){
-        unblock_signal();
-        return ENOMEM;
+
+        stack_base = _stack_allocate(stack_size);
+        if(stack_base == NULL){
+            unblock_signal();
+            return ENOMEM;
+        }
     }
 
     current->stack_base = stack_base;
-    vptr_t stack_top = stack_base + stack_limit;
-
+    vptr_t stack_top = stack_base + stack_size;
     
     /*change the stack pointer to point to top of the stack*/
     current->thread_context[0].__jmpbuf[JB_SP] = i64_ptr_mangle((long int)stack_top - sizeof(long int));
@@ -255,8 +271,13 @@ int athread_join(athread_t thread_id, void ** return_value){
         return ESRCH;
     }
 
+    if(join_thread->joining_on == athread_self()){
+        unblock_signal();
+        return EINVAL;
+    }
+
     /*deadlock error*/
-    if(thread_id == athread_self() || join_thread->joining_on == athread_self()){
+    if(thread_id == athread_self() || running_thread->joining_on == join_thread->tid){
         unblock_signal();
         return EDEADLK;
     }

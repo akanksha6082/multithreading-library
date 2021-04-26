@@ -2,12 +2,13 @@
 #define __ATHREAD_H
 
 #include "athread_types.h"
+#include "athread_attr.h"
 
 /*thread functions*/
 
 int athread_init(void);
 
-int athread_create(athread_t * thread, void*(*start_routine)(void *), void * args);
+int athread_create(athread_t * thread, athread_attr_t * attr, void*(*start_routine)(void *), void * args);
 
 int athread_equal(athread_t thread1, athread_t thread2);
 
