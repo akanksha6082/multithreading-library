@@ -44,6 +44,12 @@ void * ptr;
         }                                                                       \
     }                                                                           \
 
+static int run = 1;
+void signal_handler(int signum){
+    fprintf(stdout, "thread recieved %s\n", strsignal(signum));
+    run = 0;
+}
+
 void * thread_1(void * args){
     int a = 100;
     void * p = &a;
@@ -92,7 +98,11 @@ void * exit_thread_sub(void * args) {
 
 /*infinitely running thread*/
 void * signal_thread(void * args){
-    while(1);
+    int a = 1500;
+    void *p = &a;
+    while(run);
+    athread_exit(p);
+
 }
 
 void * thread_4(void * args){
@@ -382,10 +392,25 @@ int main(int argc, char ** argv){
     fprintf(stdout, "\n\033[1;34mcase 1 :  Testing SIGINT signal \033[0m\n");
     {
         athread_t tid;
+        void * ret;
+        signal(SIGUSR1, signal_handler);
         CHECK(athread_create(&tid, NULL, signal_thread, NULL ));
-        printf("created an infintely looping thread\n");
-        printf("sending SIGINT signal\n");
-        athread_kill(tid, SIGINT);
+        
+        fprintf(stdout, "created an infintely looping thread\n");
+        fprintf(stdout, "sending SIGUSR1 signal\n");
+        
+        CHECK(athread_kill(tid, SIGUSR1));
+        CHECK(athread_join(tid, &ret));
+
+        fprintf(stdout, "expected return value after thread recieves signal = %d\n", 1500);
+        fprintf(stdout, "collected return value after thread recieves signal = %d\n", *(int *)ret);
+
+        if(*(int*)ret == 1500){
+            fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n"); 
+        }
+        else{
+            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
+        }
     }
 
     return 0;
