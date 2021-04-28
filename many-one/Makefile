@@ -1,5 +1,5 @@
 target: test.o athread.o queue.o stackmem.o timer.o utils.o athread_locks.o athread_attr.o
-		cc test.o athread.o queue.o stackmem.o timer.o utils.o athread_locks.o athread_attr.o -o thread
+		cc test2.o athread.o queue.o stackmem.o timer.o utils.o athread_locks.o athread_attr.o -o thread
 test.o: test.c athread.h athread_attr.h
 		cc -c test.c
 athread.o : athread.c athread.h athread_attr.h athread_types.h utils.h queue.h stackmem.h timer.h mangle.h
