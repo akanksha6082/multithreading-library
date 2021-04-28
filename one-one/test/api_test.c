@@ -17,7 +17,6 @@
         }                                                                       \
     }    
 
-//jiska expected result is zero
 #define CHECK_PASS(CALL)                                                        \
     {                                                                           \
         int result;                                                             \
@@ -31,7 +30,6 @@
                                                                                 \
     }                                                                           \
 
-//jiska expected result is error
 #define CHECK_FAIL(CALL)                                                        \
     {                                                                           \
         int result;                                                             \
@@ -64,7 +62,7 @@ void * ret_thread(void* args){
     return ptr;
 }
 
-/*thread returns using athread_exit() interface */
+/*thread returns using athread_exit() */
 void * exit_thread(void * args) {
     int a = 700;
     void * ptr = &a;
@@ -90,10 +88,28 @@ void * exit_thread_sub(void * args) {
     return NULL;
 }
 
+/*infinitely running thread*/
 void * signal_thread(void * args){
 
     while(1);
     
+}
+
+void * thread_4(void * args){
+    int a = 1000;
+    void * p = &a;
+    sleep(1);
+    athread_exit(p);
+}
+
+void * thread_3(void * args){
+    void * ret;
+    athread_t tid;
+    CHECK(athread_create(&tid, NULL, thread_4, NULL));
+    fprintf(stdout, "created thread within thread (sub-thread)\n");
+    CHECK(athread_join(tid, &ret));
+    sleep(1);
+    athread_exit(ret);
 }
 
 int main(int argc, char ** argv){
@@ -218,7 +234,14 @@ int main(int argc, char ** argv){
         CHECK_FAIL(athread_join(tid, NULL));   
     }
 
-    fprintf(stdout, "\n\033[1;34mcase 3 : thread join on detached thread\033[0m\n");
+    fprintf(stdout, "\n\033[1;34mcase 3 : thread join on itself\033[0m\n");
+    {
+        athread_t tid;
+        CHECK(athread_create(&tid, NULL, thread_1, NULL));
+        CHECK_FAIL(athread_join(athread_self(), NULL)); 
+    }
+
+    fprintf(stdout, "\n\033[1;34mcase 4 : thread join on detached thread\033[0m\n");
     {
         athread_t tid;
         athread_attr_t attr;
@@ -229,7 +252,7 @@ int main(int argc, char ** argv){
 
     }
 
-    fprintf(stdout, "\n\033[1;34mcase 4 : thread join on multiple thread\033[0m\n\n");
+    fprintf(stdout, "\n\033[1;34mcase 5 : thread join on multiple thread\033[0m\n\n");
     {
         athread_t tid[3];
         for(int i=0; i<3; i++){
@@ -246,7 +269,7 @@ int main(int argc, char ** argv){
         
     }
 
-    fprintf(stdout, "\n\033[1;34mcase 5 : joining on thread and collecting the return value \033[0m\n\n");
+    fprintf(stdout, "\n\033[1;34mcase 6 : joining on thread and collecting the return value \033[0m\n\n");
     {
         athread_t tid;
         CHECK(athread_create(&tid, NULL, thread_2, NULL));
@@ -258,6 +281,26 @@ int main(int argc, char ** argv){
         
         if(*(int*)return_value == 200){
             fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n");    
+        }
+        else{
+            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
+        }
+    }
+    
+    fprintf(stdout, "\n\033[1;34mcase 7 : joining on thread which is joining on some other thread\033[0m\n\n");
+    {
+        athread_t tid;
+        int expected_ret_val = 1000;
+        void * ret;
+        CHECK(athread_create(&tid, NULL, thread_3, NULL));
+        fprintf(stdout, "created thread\n");
+        CHECK(athread_join(tid, &ret));
+
+        fprintf(stdout, "expected return value sub thread in main = %d\n", expected_ret_val);
+        fprintf(stdout, "collected return value from sub thread in main = %d\n", *(int*)ret);
+
+        if(expected_ret_val == *(int*)ret){
+            fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n"); 
         }
         else{
             fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
