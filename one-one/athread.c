@@ -229,14 +229,14 @@ int athread_join(athread_t thread_id, void ** return_value){
     
     athread_spin_lock(&liblock);
 
-    /*search for target thread*/
-    athread * join_thread = search_tcb(&task_queue, thread_id);
-
     /*if the target thread is the main thread*/
     if(thread_id == getpid()){
         athread_spin_unlock(&liblock);
         return EINVAL;
     }
+
+    /*search for target thread*/
+    athread * join_thread = search_tcb(&task_queue, thread_id);
 
     /*check for erros*/
     if(join_thread == NULL){
