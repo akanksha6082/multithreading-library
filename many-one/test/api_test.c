@@ -90,6 +90,28 @@ void * exit_thread_sub(void * args) {
     return NULL;
 }
 
+/*infinitely running thread*/
+void * signal_thread(void * args){
+    while(1);
+}
+
+void * thread_4(void * args){
+    int a = 1000;
+    void * p = &a;
+    sleep(1);
+    athread_exit(p);
+}
+
+void * thread_3(void * args){
+    void * ret;
+    athread_t tid;
+    CHECK(athread_create(&tid, NULL, thread_4, NULL));
+    fprintf(stdout, "created thread within thread (sub-thread)\n");
+    CHECK(athread_join(tid, &ret));
+    sleep(1);
+    athread_exit(ret);
+}
+
 int main(int argc, char ** argv){
     
     athread_init();
@@ -265,6 +287,26 @@ int main(int argc, char ** argv){
         }
     }
 
+    fprintf(stdout, "\n\033[1;34mcase 7 : Thread join on thread which is joining on some other thread \033[0m\n\n");
+    {
+        athread_t tid;
+        int expected_ret_val = 1000;
+        void * ret;
+        CHECK(athread_create(&tid, NULL, thread_3, NULL));
+        fprintf(stdout, "created thread\n");
+        CHECK(athread_join(tid, &ret));
+
+        fprintf(stdout, "expected return value sub thread in main = %d\n", expected_ret_val);
+        fprintf(stdout, "collected return value from sub thread in main = %d\n", *(int*)ret);
+
+        if(expected_ret_val == *(int*)ret){
+            fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n"); 
+        }
+        else{
+            fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
+        }
+    }
+
     fprintf(stdout, "=============================\n");
     fprintf(stdout, "    THREAD EXIT\n");
     fprintf(stdout, "=============================\n");
@@ -331,6 +373,19 @@ int main(int argc, char ** argv){
             fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n");
         }
 
+    }
+
+    fprintf(stdout, "=============================\n");
+    fprintf(stdout, "    THREAD KILL\n");
+    fprintf(stdout, "=============================\n");
+
+    fprintf(stdout, "\n\033[1;34mcase 1 :  Testing SIGINT signal \033[0m\n");
+    {
+        athread_t tid;
+        CHECK(athread_create(&tid, NULL, signal_thread, NULL ));
+        printf("created an infintely looping thread\n");
+        printf("sending SIGINT signal\n");
+        athread_kill(tid, SIGINT);
     }
 
     return 0;
