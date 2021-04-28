@@ -73,14 +73,7 @@ static void scheduler(int signum){
 
     athread * prev_thread = running_thread;
 
-    athread * next_thread = find_next_runnable_thread();
-    
-    if(next_thread == NULL){
-        timer_enable(&timer);
-        return;
-    }
-    
-    /* save context*/
+     /* save context*/
     if(sigsetjmp(running_thread->thread_context, 1) == 1){
         
         sigset_t tmp;
@@ -99,8 +92,14 @@ static void scheduler(int signum){
         return;
     }
 
+    athread * next_thread = find_next_runnable_thread();
     
-
+    if(next_thread == NULL){
+        timer_enable(&timer);
+        siglongjmp(prev_thread->thread_context, 1);
+        return;
+    }
+    
     if(prev_thread->thread_state == RUNNING){
         prev_thread->thread_state = RUNNABLE;
     }
