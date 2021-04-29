@@ -106,10 +106,12 @@ int athread_spin_unlock(athread_spinlock_t *spinlock){
 /*spinlock - destroy*/
 int athread_spin_destroy(athread_spinlock_t *spinlock){
     
+    /*check for errors*/
     if(!spinlock){
         return EINVAL;
     }
 
+    /*check for errors*/
     if(spinlock->lock == SPINLOCK_ACQUIRED){
         return EBUSY;
     }
@@ -170,6 +172,7 @@ int athread_mutex_lock(athread_mutex_t * mutex){
 /*lock release*/
 int athread_mutex_unlock(athread_mutex_t * mutex){
 
+    /*check for errors*/
     if(mutex == NULL)
         return EINVAL;
 
@@ -178,6 +181,7 @@ int athread_mutex_unlock(athread_mutex_t * mutex){
         return -1;
     }
     
+    /*check for errors*/
     if(mutex->owner != athread_self()){
         return EACCES;
     }
@@ -187,7 +191,6 @@ int athread_mutex_unlock(athread_mutex_t * mutex){
         mutex->owner = -1;
     }
     
-
     /*invoke futex wake operation*/
     int ret_val = _futex(&mutex->locked_value, FUTEX_WAKE, 1);
     
