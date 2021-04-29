@@ -4,6 +4,7 @@
 
 #include "timer.h"
 
+/*set up a virtual timer of 10ms*/
 void timer_enable(athread_timer_t *timer){
 
     timer->it_interval.tv_usec = TIMER_INTERRUPT;
@@ -16,6 +17,7 @@ void timer_enable(athread_timer_t *timer){
     return;
 }
 
+/*blocks SIGVTALRM signal for calling thread*/
 void block_signal(void){
     
     sigset_t tmp;
@@ -25,6 +27,7 @@ void block_signal(void){
 
 }
 
+/*unblocks SIGVTALRM signal for calling thread*/
 void unblock_signal(void){
 
     sigset_t tmp;

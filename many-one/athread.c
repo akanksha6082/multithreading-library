@@ -43,6 +43,7 @@ void _cleanup_handler(void){
 
 }
 
+/*finds the next schedulable/runnable thread in round robin fashion*/
 static athread * find_next_runnable_thread(){
     
     if(is_empty(task_queue))
@@ -69,6 +70,7 @@ static athread * find_next_runnable_thread(){
     return NULL;
 }
 
+/*schdules the next runnable thread*/
 static void scheduler(int signum){
 
     athread * prev_thread = running_thread;
@@ -115,6 +117,7 @@ static void scheduler(int signum){
 
 }
 
+/*wrapper function to thread start routine*/
 static void _wrapper_start(void){
 
     unblock_signal();
@@ -129,6 +132,7 @@ static void _wrapper_start(void){
     
 }
 
+/*initialization routine*/
 int athread_init(void){
 
     /*initialize the task queue*/
@@ -178,8 +182,10 @@ int athread_init(void){
     return 0;
 }
 
+/*create thread*/
 int athread_create(athread_t * thread, athread_attr_t * attr, thread_start_t start_routine, void * args){
     
+    /*check for errors*/
     if(!is_initialised)
         athread_init();
     
@@ -270,6 +276,7 @@ int athread_join(athread_t thread_id, void ** return_value){
         return ESRCH;
     }
 
+    
     if(join_thread->joining_on == athread_self()){
         unblock_signal();
         return EINVAL;
@@ -281,6 +288,7 @@ int athread_join(athread_t thread_id, void ** return_value){
         return EDEADLK;
     }
 
+    /*check if the thread has terminated*/
     if(join_thread->detachstate == ATHREAD_CREATE_EXITED){
        
         if(return_value){
@@ -302,10 +310,12 @@ int athread_join(athread_t thread_id, void ** return_value){
     
     unblock_signal();
 
+    /*wait for the thread to terminate*/
     while(join_thread->thread_state != EXITED);
 
     join_thread->detachstate = ATHREAD_CREATE_JOINED;
 
+    /*set return value of thread*/
     if(return_value){
         *(return_value) = join_thread->return_value;
     }
@@ -314,18 +324,22 @@ int athread_join(athread_t thread_id, void ** return_value){
     return 0;    
 }
 
+/*self blocking - giving up of cpu*/
 void athread_yield(void){
     raise(SIGVTALRM);
 }
 
+/*returns the library managed thread id of calling thread*/
 athread_t athread_self(void){
     return running_thread->tid;
 }
 
+/*check if the two threads are equal*/
 int athread_equal(athread_t thread1, athread_t thread2){
     return thread1 == thread2;
 }
 
+/*thread terminate*/
 void athread_exit(void * retval){
 
     block_signal();
@@ -349,6 +363,7 @@ void athread_exit(void * retval){
     athread_yield();
 }
 
+/*send signal to a particular thread*/
 int athread_kill(athread_t thread_id, int signum){
    
     if(signum <= 0 || signum >= NSIG){

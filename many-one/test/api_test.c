@@ -389,7 +389,7 @@ int main(int argc, char ** argv){
     fprintf(stdout, "    THREAD KILL\n");
     fprintf(stdout, "=============================\n");
 
-    fprintf(stdout, "\n\033[1;34mcase 1 :  Testing SIGINT signal \033[0m\n");
+    fprintf(stdout, "\n\033[1;34mcase 1 :  Testing SIGUSR1 signal \033[0m\n");
     {
         athread_t tid;
         void * ret;
