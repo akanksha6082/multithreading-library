@@ -1,19 +1,49 @@
-target : test.o athread.o utils.o athread_attr.o stackmem.o queue.o athread_locks.o
-	cc test.o athread.o utils.o athread_attr.o stackmem.o queue.o athread_locks.o -o thread
+DIR_BIN  	:= bin
 
-test.o : test.c athread.h athread_attr.h
-	cc -c test.c
-athread.o : athread.c athread.h athread_attr.h utils.h stackmem.h queue.h athread_types.h
-	cc -c athread.c
-athread_attr.o : athread_attr.c athread_attr.h utils.h athread_types.h
-	cc -c athread_attr.c
-utils.o : utils.c utils.h athread_types.h
-	cc -c utils.c
-stackmem.o : stackmem.c stackmem.h athread_types.h utils.h
-	cc -c stackmem.c
-queue.o : queue.h queue.c athread_types.h
-	cc -c queue.c
-athread_locks.o : athread_locks.c athread.h athread_types.h
-	cc -c athread_locks.c
+DIR_INC     := include
+
+DIR_SRC  	:= src
+
+DIR_OBJ  	:= obj
+
+#Directory of all test cases files
+DIR_TEST 	:= test
+
+SRC := $(wildcard $(DIR_SRC)/*.c)
+
+OBJ := $(SRC:$(DIR_SRC)/%.c=$(DIR_OBJ)/%.o)
+
+TEST_SRC := $(wildcard $(DIR_TEST)/*.c)
+# $(info TEST_SRC is $(TEST_SRC))
+
+TEST_OBJ := $(TEST_SRC:$(DIR_TEST)/%.c=$(DIR_TEST)/%.o)
+# $(info TEST_OBJ is $(TEST_OBJ))
+
+EXE := $(addprefix $(DIR_BIN)/, $(notdir $(basename $(TEST_SRC))))
+# $(info EXE is $(EXE))
+
+CC 		 := gcc
+CPPFLAGS := -I $(DIR_INC)
+
+.PHONY: all clean
+
+all: $(OBJ) $(EXE)
+
+$(DIR_OBJ):
+	mkdir -p $@
+
+$(DIR_BIN):
+	mkdir -p $@
+    
+$(DIR_BIN)/%: $(DIR_TEST)/%.o $(OBJ) | $(DIR_BIN)
+	$(CC) $(CPPFLAGS) $^ -o $@
+
+$(DIR_TEST)/%.o: $(DIR_TEST)/%.c | $(DIR_OBJ)
+	$(CC) $(CPPFLAGS) -c $< -o $@
+
+$(DIR_OBJ)/%.o: $(DIR_SRC)/%.c | $(DIR_OBJ)
+	$(CC) $(CPPFLAGS) -c $< -o $@
+
 clean:
-	rm -f *.o thread
+	$(RM) -r $(OBJ) $(TEST_OBJ) $(EXE)
+	$(RM) -d $(DIR_OBJ) $(DIR_BIN)

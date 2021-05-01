@@ -6,7 +6,7 @@
 #include "athread.h"
 
 
-#define THREAD_COUNT 5
+static int THREAD_COUNT;
 
 #define CHECK(CALL)                                                             \
     {                                                                           \
@@ -84,7 +84,13 @@ void * multiply(void * args){
 
 int main( int argc, char ** argv){
 
+    if(argc != 3){
+        fprintf(stdout, "Invalid Arguments\n");
+        exit(1);
+    }
+
     chdir("test/data");
+    THREAD_COUNT = atoi(argv[2]);
 
     FILE * fp = fopen(argv[1], "r");
     
