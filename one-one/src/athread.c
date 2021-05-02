@@ -12,11 +12,11 @@
 #include <syscall.h>
 #include <sys/syscall.h>
 
-#include "athread.h"
-#include "queue.h"
-#include "utils.h"
-#include "stackmem.h"
-#include "athread_attr.h"
+#include "../include/athread.h"
+#include "../include/queue.h"
+#include "../include/utils.h"
+#include "../include/stackmem.h"
+#include "../include/athread_attr.h"
 
 /*global definitions*/
 static size_t stack_limit;

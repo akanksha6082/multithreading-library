@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <linux/futex.h>
 
-#include "athread.h"
+#include "../include/athread.h"
 
 /*    
  *  futex syscall

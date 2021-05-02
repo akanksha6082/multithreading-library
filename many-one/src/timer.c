@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include "timer.h"
+#include "../include/timer.h"
 
 /*set up a virtual timer of 10ms*/
 void timer_enable(athread_timer_t *timer){

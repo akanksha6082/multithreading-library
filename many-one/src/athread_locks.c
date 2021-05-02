@@ -3,7 +3,7 @@
 #include <stdatomic.h>
 #include <assert.h>
 #include <errno.h>
-#include "athread.h"
+#include "../include/athread.h"
 
 #define SPINLOCK_NOT_ACCQUIRED 0
 #define SPINLOCK_ACCQUIRED 1

@@ -3,12 +3,12 @@
 #include <errno.h>
 #include <signal.h>
 
-#include "athread.h"
-#include "mangle.h"
-#include "queue.h"
-#include "utils.h"
-#include "timer.h"
-#include "stackmem.h"
+#include "../include/athread.h"
+#include "../include/mangle.h"
+#include "../include/queue.h"
+#include "../include/utils.h"
+#include "../include/timer.h"
+#include "../include/stackmem.h"
 
 /*maximum number of threads*/
 #define MAX_NUM_THREADS 64

@@ -1,7 +1,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-#include "utils.h"
+#include "../include/utils.h"
 
 
 _uint get_threads_limit(){

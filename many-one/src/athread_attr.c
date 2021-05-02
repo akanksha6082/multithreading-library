@@ -1,8 +1,8 @@
 #include<stdlib.h>
 #include<errno.h>
 
-#include "athread_attr.h"
-#include "utils.h"
+#include "../include/athread_attr.h"
+#include "../include/utils.h"
 
 #define ATHREAD_STACK_MIN 16384
 
