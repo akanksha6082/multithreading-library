@@ -33,7 +33,7 @@ node * create_node(athread * tcb){
 
 void enqueue(queue * q, athread * tcb){
     
-    node * rear = q->rear, *front = q->front;
+    node * rear = q->rear;
     if(!is_empty(q)){
         rear->next = create_node(tcb);
         q->rear = rear->next;
@@ -46,8 +46,6 @@ void enqueue(queue * q, athread * tcb){
 }
 
 node * dequeue(queue * q){
-
-    node * front = q->front;
 
     if(is_empty(q)){
         return NULL;

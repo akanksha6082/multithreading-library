@@ -58,6 +58,9 @@ typedef struct athread {
     /*stack base*/
     vptr_t stack_base;
 
+    /*stack size*/
+    size_t stack_size;
+
 
     /*thread state*/
     athread_state_t thread_state;

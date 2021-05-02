@@ -3,7 +3,7 @@
 #include<unistd.h>
 #include<fcntl.h>
 #include<string.h>
-#include "athread.h"
+#include "../include/athread.h"
 
 
 static int THREAD_COUNT;

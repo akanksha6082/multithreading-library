@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include "athread.h"
+#include "../include/athread.h"
 
 #define CHECK(CALL)                                                             \
     {                                                                           \
@@ -132,7 +132,6 @@ int main(int argc, char ** argv){
     fprintf(stdout, "\n\033[1;34mcase 1 : handling detach state of thread\033[0m\n");
 
     {
-        athread_t tid;
         athread_attr_t attr;
         athread_attr_init(&attr);
         int detachedstate;

@@ -6,7 +6,6 @@
 #include<sys/time.h>
 
 typedef struct itimerval athread_timer_t;
-static athread_timer_t timer;
 
 void timer_enable(athread_timer_t  *timer);
 void timer_disable(athread_timer_t *timer);

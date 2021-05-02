@@ -21,6 +21,9 @@ static queue *task_queue;
 static athread *running_thread;
 static int is_initialised;
 static athread_t utid = 0;
+static size_t stack_limit;
+static size_t page_size;
+static athread_timer_t timer;
 
 void _cleanup_handler(void){
 
@@ -31,7 +34,7 @@ void _cleanup_handler(void){
         athread * thread = th->tcb;
 
         /*deallocate the stack*/
-        _deallocate_stack(thread->stack_base, stack_limit);
+        _deallocate_stack(thread->stack_base, thread->stack_size);
      
         thread = NULL;
 
@@ -232,7 +235,7 @@ int athread_create(athread_t * thread, athread_attr_t * attr, thread_start_t sta
         stack_base = attr->stack_addr;
     }
     else{
-        stack_size = stack_limit;
+        stack_size = get_stack_limit();
     }
 
     if(stack_base == NULL){
@@ -245,6 +248,7 @@ int athread_create(athread_t * thread, athread_attr_t * attr, thread_start_t sta
     }
 
     current->stack_base = stack_base;
+    current->stack_size = stack_size;
     vptr_t stack_top = stack_base + stack_size;
     
     /*change the stack pointer to point to top of the stack*/

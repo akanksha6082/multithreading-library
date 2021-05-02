@@ -63,7 +63,7 @@ athread * search_tcb(queue * q, athread_t thread_id){
 }
 
 void enqueue(queue * q, athread * tcb){
-    node * front = q->front;
+
     node * new_node = create_node(tcb);
     if(is_empty(q)){
         q->front = q->rear = new_node;
@@ -78,7 +78,6 @@ void enqueue(queue * q, athread * tcb){
 }
 
 node * dequeue(queue * q){
-    node * front = q->front;
     if(is_empty(q)){
         qinit(q);
         return NULL;

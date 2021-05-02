@@ -5,11 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "athread.h"
+#include "../include/athread.h"
 
 
 athread_mutex_t mutex;
-long long int c=0, c1=0, c2=0, c3=0, run = 1;
+long long int c=0, c1=0, c2=0, c3=0, c4=0, run = 1;
 
 
 void validate(int result){
@@ -56,6 +56,18 @@ void * thread_3(void * args){
     
 }
 
+void * thread_4(void * args){
+    
+    while(run == 1){
+        c4++;
+        athread_mutex_lock(&mutex);
+        c++;
+        athread_mutex_unlock(&mutex);
+    }
+    return NULL;
+    
+}
+
 int main(int argc, char ** argv){
 
     if(argc != 2){
@@ -67,15 +79,16 @@ int main(int argc, char ** argv){
 
     athread_mutex_init(&mutex);
 
-    athread_t t1, t2, t3;
+    athread_t t1, t2, t3, t4;
     athread_attr_t attr;
     athread_attr_init(&attr);
 
     validate(athread_create(&t1, &attr, thread_1, NULL));
     validate(athread_create(&t2, &attr, thread_2, NULL));
     validate(athread_create(&t3, &attr, thread_3, NULL));
+    validate(athread_create(&t4, &attr, thread_4, NULL));
 
-    fprintf(stdout,"created 3 threads\n\n");
+    fprintf(stdout,"created 4 threads\n\n");
     fprintf(stdout,"running threads for %d seconds\n\n", atoi(argv[1]));
 
 
@@ -86,16 +99,18 @@ int main(int argc, char ** argv){
     validate(athread_join(t1, NULL));
     validate(athread_join(t2, NULL));
     validate(athread_join(t3, NULL));
+    validate(athread_join(t4, NULL));
 
     fprintf(stdout, "joined on all threads\n\n");
 
     fprintf(stdout, "Thread 1              = %lld\n", c1);
     fprintf(stdout, "Thread 2              = %lld\n", c2);
     fprintf(stdout, "Thread 3              = %lld\n", c3);
-    fprintf(stdout, "sum of thread count   = %lld\n", c1 + c2 + c3);
+    fprintf(stdout, "Thread 4              = %lld\n", c4);
+    fprintf(stdout, "sum of thread count   = %lld\n", c1 + c2 + c3 + c4);
     fprintf(stdout, "shared varaible count = %lld\n\n", c);
 
-    if(c == c1 + c2 + c3){
+    if(c == c1 + c2 + c3 + c4){
         fprintf(stdout, "\033[0;32mTEST PASS\033[0m\n");
     }
     else{

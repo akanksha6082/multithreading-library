@@ -24,6 +24,7 @@ EXE := $(addprefix $(DIR_BIN)/, $(notdir $(basename $(TEST_SRC))))
 
 CC 		 := gcc
 CPPFLAGS := -I $(DIR_INC)
+CFLAGS   := -Wall -Wno-return-type
 
 .PHONY: all clean
 
@@ -39,10 +40,10 @@ $(DIR_BIN)/%: $(DIR_TEST)/%.o $(OBJ) | $(DIR_BIN)
 	$(CC) $(CPPFLAGS) $^ -o $@
 
 $(DIR_TEST)/%.o: $(DIR_TEST)/%.c | $(DIR_OBJ)
-	$(CC) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(DIR_OBJ)/%.o: $(DIR_SRC)/%.c | $(DIR_OBJ)
-	$(CC) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
 	$(RM) -r $(OBJ) $(TEST_OBJ) $(EXE)

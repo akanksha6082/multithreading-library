@@ -192,7 +192,7 @@ int athread_mutex_unlock(athread_mutex_t * mutex){
     }
     
     /*invoke futex wake operation*/
-    int ret_val = _futex(&mutex->locked_value, FUTEX_WAKE, 1);
+    _futex(&mutex->locked_value, FUTEX_WAKE, 1);
     
     return 0;
 
