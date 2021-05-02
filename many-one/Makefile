@@ -26,7 +26,7 @@ CC 		 := gcc
 CPPFLAGS := -I $(DIR_INC)
 CFLAGS   := -Wall -Wno-return-type
 
-.PHONY: all clean
+.PHONY: all clean run
 
 all: $(OBJ) $(EXE)
 
@@ -44,6 +44,9 @@ $(DIR_TEST)/%.o: $(DIR_TEST)/%.c | $(DIR_OBJ)
 
 $(DIR_OBJ)/%.o: $(DIR_SRC)/%.c | $(DIR_OBJ)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	
+run :
+	@$(MAKE) && ./test.sh
 
 clean:
 	$(RM) -r $(OBJ) $(TEST_OBJ) $(EXE)

@@ -42,7 +42,8 @@
         }                                                                       \
     }                                                                           \
 
-static int run = 1;
+static int run = 1, mask = 0;
+
 
 void signal_handler(int signum){
     fprintf(stdout, "thread recieved %s\n", strsignal(signum));
@@ -97,6 +98,7 @@ void * exit_thread_sub(void * args) {
 
 /*infinitely running thread*/
 void * signal_thread(void * args){
+
     int a = 1500;
     void * p = &a;
     while(run);
@@ -120,6 +122,49 @@ void * thread_3(void * args){
     sleep(1);
     athread_exit(ret);
 }
+
+void signal_mask_handler(int signum){
+    fprintf(stdout, "thread recieved (%s) signal", strsignal(signum));
+    mask = 1;
+}
+
+void * mask_thread(void * args){
+    
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGUSR1);
+    
+    fprintf(stdout, "adding SIGUSR1 signal to thread mask\n");
+
+
+    CHECK(athread_sigmask(SIG_BLOCK, &set, NULL));
+
+    fprintf(stdout, "raising SIGUSR1 signal\n");
+    raise(SIGUSR1);
+
+    if(mask == 0){
+        fprintf(stdout, "Signal handler not invoked\n");
+        fprintf(stdout, "\n\033[0;32mTEST PASS\033[0m\n\n");
+    }
+    else{
+        fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n"); 
+    }
+
+    fprintf(stdout, "removing SIGUSR1 signal from thread mask\n");
+    
+    CHECK(athread_sigmask(SIG_UNBLOCK, &set, NULL));
+    
+    if(mask == 1){
+        fprintf(stdout, "\n\n\033[0;32mTEST PASS\033[0m\n\n");
+    }
+    else{
+        
+        fprintf(stdout, "Signal handler not invoked\n");
+        fprintf(stdout, "\n\033[0;31mTEST FAIL\033[0m\n\n"); 
+    }
+    return NULL;
+}
+
 
 int main(int argc, char ** argv){
     
@@ -384,6 +429,20 @@ int main(int argc, char ** argv){
     }
 
     fprintf(stdout, "=============================\n");
+    fprintf(stdout, "    CHANGE THREAD MASK\n");
+    fprintf(stdout, "=============================\n");
+
+    fprintf(stdout, "\n\033[1;34mcase 1 : add and remove signal from current mask of thread\033[0m\n");
+    {
+        athread_t tid;
+
+        signal(SIGUSR1, signal_mask_handler);
+
+        CHECK(athread_create(&tid, NULL, mask_thread, NULL));
+        CHECK(athread_join(tid, NULL));
+    }
+
+    fprintf(stdout, "=============================\n");
     fprintf(stdout, "    THREAD KILL\n");
     fprintf(stdout, "=============================\n");
 
@@ -391,9 +450,7 @@ int main(int argc, char ** argv){
     {
         athread_t tid;
         void * ret;
-
         signal(SIGINT, signal_handler);
-
         CHECK(athread_create(&tid, NULL, signal_thread, NULL ));
         fprintf(stdout, "created an infintely looping thread\n");
         fprintf(stdout, "sending SIGINT signal\n");

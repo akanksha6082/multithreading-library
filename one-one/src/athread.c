@@ -317,7 +317,7 @@ void athread_exit(void * retval){
     longjmp(current_thread->thread_context, 1);
 }
 
-/*thread detach - target thread state chnaged to detached*/
+/*thread detach - target thread state changed to detached*/
 int athread_detach(athread_t thread){
 
     athread_spin_lock(&liblock);
@@ -386,7 +386,6 @@ int athread_kill(athread_t thread, int sig_num) {
     return 0;
 }
 
-
 /*thread self - returns the thread id of the calling thread*/
 inline athread_t athread_self(void){
     return syscall(SYS_gettid);
@@ -402,7 +401,10 @@ inline int athread_equal(athread_t thread1, athread_t thread2){
     return (thread1 == thread2);
 }
 
+int athread_sigmask(int how, sigset_t * set, sigset_t *oldset){
 
+    return sigprocmask(how, set, oldset);
+}
 
 
 

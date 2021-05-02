@@ -90,6 +90,7 @@ int athread_spin_unlock(athread_spinlock_t *spinlock);
 
 int athread_spin_destroy(athread_spinlock_t *spinlock);
 
+int athread_sigmask(int how, sigset_t * set, sigset_t * oldset);
 
 
 #endif

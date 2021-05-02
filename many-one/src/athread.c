@@ -403,4 +403,7 @@ int athread_kill(athread_t thread_id, int signum){
 
 }
 
+int athread_sigmask(int how, sigset_t * set, sigset_t * oldset){
+    return sigprocmask(how, set, oldset);
+}
 

@@ -71,6 +71,8 @@ int athread_detach(athread_t thread);
 int athread_kill(athread_t thread, int sig);
 
 
+
+
 /*spinlock functions*/
 
 
@@ -142,5 +144,6 @@ int athread_mutex_unlock(athread_mutex_t * mutex);
 
 int athread_mutex_destroy(athread_mutex_t * mutex);
 
+int athread_sigmask(int how, sigset_t* set, sigset_t *oldset);
 
 #endif
