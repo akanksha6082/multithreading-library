@@ -311,6 +311,8 @@ void athread_exit(void * retval){
 
     /*store the return value of the thread routine function*/
     current_thread->return_value = retval;
+
+    current_thread->thread_state = ATHREAD_CREATE_EXITED;
     
     athread_spin_unlock(&liblock);
 
