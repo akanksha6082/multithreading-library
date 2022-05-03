@@ -29,8 +29,8 @@ There are two types of threads to be managed in a modern system : User threads a
 
 <ul>
   <li>One-One</li>
-    <a href="https://github.com/akanksha6082/multithreading-library">
-    <img align="center" src="images/one-one.jpg" alt="One-One Model" width="300" height="300">
+    <a align="center" href="https://github.com/akanksha6082/multithreading-library">
+    <img  src="images/one-one.jpg" alt="One-One Model" width="200" height="200">
     </a>
   
   <li>Many-One</li>
