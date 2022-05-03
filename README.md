@@ -24,8 +24,14 @@
 ## About The Project
 
 **athread** is a light weight multithreading library based on one-one and many-one threading model.
+
+There are two types of threads to be managed in a modern system : User threads and Kernel threads. One-One and Many-One Model of threading are specific implementations of mapping the user level threads to kernel level threads.
+
 <ul>
   <li>One-One</li>
+    <a href="https://github.com/akanksha6082/multithreading-library">
+    <img src="images/One-One.png" alt="One-One Model" width="80" height="80">
+    </a>
   
   <li>Many-One</li>
 </ul>
