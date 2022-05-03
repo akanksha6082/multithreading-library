@@ -13,7 +13,7 @@
     </li>
     <li><a href="#building">Building</a></li>
     <li>
-      <a href="#how_to_use">Using athread in your project</a>
+      <a href="#using-athread-in-your-project">Using athread in your project</a>
     </li>
     <li><a href="#contribute">Contribute</a></li>
     <li><a href="#authors">Authors</a></li>
@@ -23,7 +23,11 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-**athread** is a light weight multithreading library based on one-one and many-one threading model. 
+**athread** is a light weight multithreading library based on one-one and many-one threading model.
+<ul>
+  <li>One-One</li>
+  <li>Many-One</li>
+</ul>
 
 ## Contribute
 
