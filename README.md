@@ -48,6 +48,7 @@ Execute the following command to build and test ahtread library
 ```
 make run
 ```
+## Using athread in your project
 
 ## Contribute
 
