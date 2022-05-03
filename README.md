@@ -26,7 +26,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-**athread** is a light weight multithreading library based on one-one and many-one threading model.
+**athread** is a light weight POSIX based multithreading library based on one-one and many-one threading model.
 
 There are two types of threads to be managed in a modern system : User threads and Kernel threads. One-One and Many-One Model of threading are specific implementations of mapping the user level threads to kernel level threads.
 
@@ -52,10 +52,11 @@ There are two types of threads to be managed in a modern system : User threads a
   <li>Thread Attribute Handling</li>
   <li>Thread Destruction</li>
   <li>Thread Signals</li>
-  <li>Thread Synchronization
+  <li>Thread Synchronization  </li>
+  <ul>
       <li>Mutexes</li>
       <li>Spin Locks </li>
-  </li>
+  </ul>
    
 </ul>
 
