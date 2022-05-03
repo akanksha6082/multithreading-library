@@ -50,8 +50,26 @@ make run
 ```
 ## Using athread in your project
 
-You can use mthread in you project by directly copying header and source files from either <a href="https://github.com/akanksha6082/multithreading-library/tree/master/one-one">one-one/</a> or <a href="https://github.com/akanksha6082/multithreading-library/tree/master/many-one">many-one/</a> 
+You can use athread in you project by directly copying header and source files from either <a href="https://github.com/akanksha6082/multithreading-library/tree/master/one-one">one-one/</a> or <a href="https://github.com/akanksha6082/multithreading-library/tree/master/many-one">many-one/</a> into your projet folder. 
 
+To get you started quickly, let's take a look at how to get a simple Hello World project working.
+```
+#include <stdio.h>
+#include "athread.h"
+
+void Thread_1(void) {
+    printf("Hello World!\n");
+    mthread_exit(NULL);
+}
+
+int main() {
+    athread_t tid;
+    athread_init();
+    athread_create(&tid, NULL, Thread_1, NULL);
+    athread_join(tid, NULL);
+    return 0;
+}
+```
 ## Contribute
 
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
