@@ -50,6 +50,8 @@ make run
 ```
 ## Using athread in your project
 
+You can use mthread in you project by directly copying header and source files from either <a href="https://github.com/akanksha6082/multithreading-library/one-one">one-one/</a> or <a href="https://github.com/akanksha6082/multithreading-library/many-one">many-one/</a> 
+
 ## Contribute
 
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
