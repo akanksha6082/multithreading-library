@@ -43,6 +43,8 @@ There are two types of threads to be managed in a modern system : User threads a
 </ul>
 
 ## Building
+
+Execute the following command to build ahtread using make
 ```
 make run
 ```
