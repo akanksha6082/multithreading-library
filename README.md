@@ -11,6 +11,9 @@
     <li>
       <a href="#about-the-project">About The Project</a>
     </li>
+    <li>
+      <a href="#features-supported">Features Supported</a>
+    </li>
     <li><a href="#building">Building</a></li>
     <li>
       <a href="#using-athread-in-your-project">Using athread in your project</a>
@@ -40,6 +43,20 @@ There are two types of threads to be managed in a modern system : User threads a
     <a align="center" href="https://github.com/akanksha6082/multithreading-library">
     <img  src="images/many-one.png" alt="Many-One Model" width="300" height="200">
     </a>
+</ul>
+
+## Features Supported
+
+<ul>
+  <li>Thread creation</li>
+  <li>Thread Attribute Handling</li>
+  <li>Thread Destruction</li>
+  <li>Thread Signals</li>
+  <li>Thread Synchronization
+      <li>Mutexes</li>
+      <li>Spin Locks </li>
+  </li>
+   
 </ul>
 
 ## Building
