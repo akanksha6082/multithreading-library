@@ -1,7 +1,7 @@
 
 <!-- PROJECT LOGO -->
 <br />
-  <h3 align="center">Multithreading C library</h3>
+  <h3 align="center">ATHREAD - Multithreading C library</h3>
 <hr/>
 
 <!-- TABLE OF CONTENTS -->
@@ -50,7 +50,7 @@ make run
 ```
 ## Using athread in your project
 
-You can use athread in you project by directly copying header and source files from either <a href="https://github.com/akanksha6082/multithreading-library/tree/master/one-one">one-one/</a> or <a href="https://github.com/akanksha6082/multithreading-library/tree/master/many-one">many-one/</a> into your projet folder. 
+You can use athread in you project by directly copying header and source files from either <a href="https://github.com/akanksha6082/multithreading-library/tree/master/one-one">one-one/</a> or <a href="https://github.com/akanksha6082/multithreading-library/tree/master/many-one">many-one/</a> into your project folder. 
 
 To get you started quickly, let's take a look at how to get a simple Hello World project working.
 ```
