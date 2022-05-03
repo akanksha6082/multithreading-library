@@ -10,10 +10,8 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
-      
-      <li><a href="#building">Building</a></li>
-      
     </li>
+    <li><a href="#building">Building</a></li>
     <li>
       <a href="#how_to_use">Using athread in your project</a>
     </li>
